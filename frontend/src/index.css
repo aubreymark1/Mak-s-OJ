@@ -1,0 +1,87 @@
+@import './styles/fonts.css';
+@import 'tailwindcss' source(none);
+@source '../**/*.{js,ts,jsx,tsx}';
+@import 'tw-animate-css';
+@import './styles/theme.css';
+@import './styles/problem-page.css';
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at top right, rgba(0, 0, 0, 0.015), transparent 30%),
+    var(--background);
+}
+
+.dark body,
+body.dark {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.02), transparent 30%),
+    var(--background);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* iPad / mobile: ensure Monaco Editor supports copy/paste and text selection */
+.monaco-editor,
+.monaco-editor .inputarea,
+.monaco-editor .monaco-editor-background,
+.monaco-editor textarea,
+.monaco-editor .overflow-guard {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -webkit-touch-callout: default !important;
+  touch-action: auto !important;
+}
+
+.monaco-editor .inputarea textarea {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -webkit-touch-callout: default !important;
+  pointer-events: auto !important;
+}
+
+/* Prevent framer-motion overlays from blocking editor interaction */
+.monaco-editor ~ div,
+.monaco-editor + div {
+  pointer-events: none;
+}
+
+/* Diff highlight styles for output comparison */
+mark.diff-highlight-del {
+  background-color: rgba(212, 24, 61, 0.15);
+  color: var(--destructive);
+  border-radius: 2px;
+  padding: 0 1px;
+  text-decoration: line-through;
+  text-decoration-color: rgba(212, 24, 61, 0.5);
+}
+
+mark.diff-highlight-ins {
+  background-color: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  border-radius: 2px;
+  padding: 0 1px;
+}

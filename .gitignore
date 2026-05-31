@@ -1,0 +1,117 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
+node_modules/
+
+# ── Build outputs ────────────────────────────────────────────────────────────
+dist/
+build/
+out/
+.next/
+dist-ssr/
+
+# ── Environment variables ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.ssh-tunnel.*.log
+.vite-dev.*.log
+.vite-preview.*.log
+problem-repair.log
+
+# ── Cache ────────────────────────────────────────────────────────────────────
+.cache/
+.turbo/
+.vite/
+__pycache__/
+*.pyc
+
+# ── Coverage ─────────────────────────────────────────────────────────────────
+coverage/
+
+# ── Database / local data ────────────────────────────────────────────────────
+*.sqlite
+*.sqlite3
+*.db
+data/
+uploads/
+
+# ── OS generated files ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Editor directories and files ─────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# ── Project-specific exclusions ──────────────────────────────────────────────
+
+# Temporary working files and directories
+_tmp_*
+oj_tmp_*/
+oj_week12_check*/
+
+# Import / utility scripts (contain hardcoded test credentials)
+import_*.py
+import_*.ps1
+check_*.py
+fix_*.py
+verify_*.py
+update_*.py
+seed_data.py
+
+# C++ problem generators and standard answers (course-specific)
+generator_*.cpp
+std_*.cpp
+
+# Problem source data (course-specific, not part of OJ frontend)
+matrix_practice/
+
+# Figma raw exports
+figma_raw/
+
+# Backup directories
+frontend_backup_*/
+
+# Figma design prototype (not production code)
+frontend-design/
+
+# Upstream reference repo (has its own git history)
+mak-oj-demo/
+
+# Backend patches (deployed separately on server)
+_remote_backend_patch/
+
+# JSON data files (problem import data)
+a1_*.json
+_tmp_*.json
+
+# Playwright test logs
+.playwright-cli/
+
+# Claude AI working directory
+.claude/
+
+# SSH tunnel config (if any)
+*.pem
+*.key
+*.p12
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Bundled package archives
+*.tgz

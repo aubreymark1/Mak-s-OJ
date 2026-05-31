@@ -1,0 +1,312 @@
+/* ═══════════════════════════════════════════════════════════
+   Problem Page Styles — Modern OJ / Hydro-like reading UX
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Container ─────────────────────────────────────────── */
+.problem-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 2.5rem 3rem;
+  font-family: var(--font-body);
+  line-height: 1.75;
+  color: var(--foreground);
+}
+
+@media (max-width: 768px) {
+  .problem-page {
+    padding: 1.25rem 1rem 2rem;
+  }
+}
+
+/* ── Title ─────────────────────────────────────────────── */
+.problem-title {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0 0 0.75rem;
+  color: var(--foreground);
+}
+
+/* ── Meta info row ─────────────────────────────────────── */
+.problem-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+
+.problem-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.problem-meta-label {
+  color: var(--muted-foreground);
+}
+
+.problem-meta-value {
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.problem-meta-value--mono {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--primary);
+}
+
+.problem-meta-separator {
+  width: 1px;
+  height: 1rem;
+  background: var(--border);
+}
+
+/* ── Tags / Difficulty badges ──────────────────────────── */
+.problem-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 1.5rem;
+}
+
+.problem-tag {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--secondary);
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.problem-difficulty {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1.6;
+}
+
+/* ── Markdown body (problem-markdown) ─────────────────── */
+.problem-markdown {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+  color: var(--foreground);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.problem-markdown p {
+  margin: 0 0 1em;
+}
+
+.problem-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+/* Section headings inside markdown */
+.problem-section-title {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 1.75rem 0 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.problem-subsection-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--foreground);
+}
+
+/* ── Inline code ───────────────────────────────────────── */
+.problem-inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+/* ── Fenced code blocks ────────────────────────────────── */
+.problem-markdown pre {
+  margin: 0.75rem 0 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius);
+  background: var(--muted);
+  border: 1px solid var(--border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.problem-markdown pre code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: var(--foreground);
+}
+
+/* ── Tables (GFM) ──────────────────────────────────────── */
+.problem-table-wrapper {
+  margin: 0.75rem 0 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.problem-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.problem-markdown th,
+.problem-markdown td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.problem-markdown th {
+  font-weight: 600;
+  background: var(--muted);
+}
+
+.problem-markdown tr:nth-child(even) {
+  background: color-mix(in srgb, var(--muted) 40%, transparent);
+}
+
+/* ── Lists ─────────────────────────────────────────────── */
+.problem-markdown ul,
+.problem-markdown ol {
+  margin: 0.5rem 0 1rem;
+  padding-left: 1.5em;
+}
+
+.problem-markdown li {
+  margin: 0.25rem 0;
+}
+
+.problem-markdown li > ul,
+.problem-markdown li > ol {
+  margin: 0.25rem 0;
+}
+
+/* ── Blockquote ────────────────────────────────────────── */
+.problem-blockquote {
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--primary);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+  color: var(--muted-foreground);
+}
+
+.problem-blockquote p {
+  margin-bottom: 0.5rem;
+}
+
+.problem-blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Sample I/O blocks ─────────────────────────────────── */
+.problem-sample-block {
+  margin: 0.75rem 0 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.problem-sample-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: var(--muted);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.problem-sample-body {
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--muted) 50%, transparent);
+}
+
+.problem-sample-body pre {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: var(--foreground);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ── KaTeX display math ────────────────────────────────── */
+.problem-markdown .math-display {
+  margin: 1rem 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.problem-markdown .katex-display {
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.problem-markdown .katex-display > .katex {
+  white-space: nowrap;
+}
+
+/* ── Horizontal rule ───────────────────────────────────── */
+.problem-markdown hr {
+  margin: 1.5rem 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Links ─────────────────────────────────────────────── */
+.problem-markdown a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.problem-markdown a:hover {
+  opacity: 0.8;
+}
+
+/* ── Strong / em ───────────────────────────────────────── */
+.problem-markdown strong {
+  font-weight: 600;
+}
+
+.problem-markdown em {
+  font-style: italic;
+}
