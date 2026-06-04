@@ -1,12 +1,46 @@
 import { Binary, BrainCircuit, Sparkles } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { AppShell } from '../components/AppShell';
 import { ProblemTable } from '../components/ProblemTable';
 import { api } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
 import type { ProblemListItem, ProblemListResponse } from '../types/oj';
 import { Aurora, SpotlightCard, BlurText } from '../components/react-bits';
+
+/** 数字递增动画 hook */
+function useCountUp(target: number, duration = 1600, enabled = true) {
+  const [value, setValue] = useState(0);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!enabled || target <= 0) {
+      setValue(target);
+      return;
+    }
+
+    setValue(0);
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out-expo 缓动：先快后慢，数字跳动感强
+      const eased = 1 - Math.pow(1 - progress, 4);
+      setValue(Math.round(eased * target));
+
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [target, duration, enabled]);
+
+  return value;
+}
 
 const PAGE_SIZE = 20;
 
@@ -88,17 +122,19 @@ export default function DashboardPage() {
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 mb-8">
           <StatCard
             title="题目数量"
-            value={String(problemCount)}
+            value={problemCount}
             description="当前可读取的题目总数"
             icon={<Binary className="size-4 text-muted-foreground" />}
             spotlightColor="rgba(255, 255, 255, 0.08)"
+            index={0}
           />
           <StatCard
             title="标签覆盖"
-            value={String(taggedProblemCount)}
+            value={taggedProblemCount}
             description="已带标签的题目数量"
             icon={<BrainCircuit className="size-4 text-muted-foreground" />}
             spotlightColor="rgba(255, 255, 255, 0.08)"
+            index={1}
           />
           <StatCard
             title="当前状态"
@@ -106,6 +142,7 @@ export default function DashboardPage() {
             description={isAuthenticated ? '已登录，可直接提交评测。' : '登录后可提交评测并查看学习画像。'}
             icon={<Sparkles className="size-4 text-muted-foreground" />}
             spotlightColor="rgba(255, 255, 255, 0.08)"
+            index={2}
           />
         </div>
 
@@ -191,21 +228,55 @@ function StatCard({
   description,
   icon,
   spotlightColor,
+  index = 0,
 }: {
   title: string;
-  value: string;
+  value: string | number;
   description: string;
   icon: ReactNode;
   spotlightColor?: string;
+  index?: number;
 }) {
+  const isNumeric = typeof value === 'number';
+  const countValue = useCountUp(isNumeric ? value : 0, 1600 + index * 200, isNumeric);
+  const displayValue = isNumeric ? String(countValue) : String(value);
+
   return (
-    <SpotlightCard className="p-5 sm:p-6" spotlightColor={spotlightColor}>
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs uppercase tracking-widest text-muted-foreground">{title}</span>
-        {icon}
-      </div>
-      <div className="text-2xl font-bold text-foreground">{value}</div>
-      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-    </SpotlightCard>
+    <motion.div
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        duration: 0.6,
+        delay: 0.15 + index * 0.12,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      whileHover={{
+        y: -4,
+        transition: { duration: 0.25, ease: 'easeOut' },
+      }}
+      className="group"
+    >
+      <SpotlightCard
+        className="p-5 sm:p-6 transition-shadow duration-300 group-hover:shadow-[0_0_30px_rgba(129,140,248,0.08)]"
+        spotlightColor={spotlightColor}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-xs uppercase tracking-widest text-muted-foreground transition-colors duration-300 group-hover:text-foreground/70">
+            {title}
+          </span>
+          <div className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
+            {icon}
+          </div>
+        </div>
+        <div className="text-2xl font-bold text-foreground tabular-nums tracking-tight">
+          {displayValue}
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground transition-colors duration-300 group-hover:text-foreground/50">
+          {description}
+        </p>
+        {/* 底部光带 */}
+        <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-primary/60 via-primary/30 to-transparent transition-all duration-500 ease-out group-hover:w-full" />
+      </SpotlightCard>
+    </motion.div>
   );
 }
