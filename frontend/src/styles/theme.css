@@ -201,3 +201,24 @@ body, h1, h2, h3, h4, h5, h6, p, span, a, li, td, th, label, button, input, text
 .glow-primary {
   box-shadow: 0 0 20px var(--glow-primary), 0 0 60px var(--glow-accent);
 }
+
+/* Stat card number pop-out effect (南孚风格数字弹出) */
+.stat-number-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.stat-number {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              color 0.3s ease,
+              text-shadow 0.3s ease;
+  transform-origin: left center;
+  will-change: transform;
+}
+
+.group:hover .stat-number {
+  transform: scale(1.25) translateY(-2px);
+  color: #818cf8;
+  text-shadow: 0 0 20px rgba(129, 140, 248, 0.4),
+               0 0 40px rgba(129, 140, 248, 0.15);
+}

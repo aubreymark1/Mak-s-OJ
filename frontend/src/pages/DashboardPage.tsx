@@ -110,11 +110,11 @@ export default function DashboardPage() {
               direction="top"
               className="text-4xl sm:text-5xl font-bold text-white mb-2"
             />
-            {isAuthenticated && user && (
-              <p className="text-white/50 text-sm">
-                Welcome back, {user.username}
-              </p>
-            )}
+            <p className="text-white/50 text-sm">
+              {isAuthenticated && user
+                ? `Welcome back, ${user.username}`
+                : 'Algorithm challenges, zero friction.'}
+            </p>
           </div>
         </div>
 
@@ -250,32 +250,23 @@ function StatCard({
         delay: 0.15 + index * 0.12,
         ease: [0.16, 1, 0.3, 1],
       }}
-      whileHover={{
-        y: -4,
-        transition: { duration: 0.25, ease: 'easeOut' },
-      }}
-      className="group"
     >
-      <SpotlightCard
-        className="p-5 sm:p-6 transition-shadow duration-300 group-hover:shadow-[0_0_30px_rgba(129,140,248,0.08)]"
-        spotlightColor={spotlightColor}
-      >
+      <SpotlightCard className="p-5 sm:p-6 group" spotlightColor={spotlightColor}>
         <div className="mb-3 flex items-center justify-between">
-          <span className="text-xs uppercase tracking-widest text-muted-foreground transition-colors duration-300 group-hover:text-foreground/70">
+          <span className="text-xs uppercase tracking-widest text-muted-foreground">
             {title}
           </span>
-          <div className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-            {icon}
+          {icon}
+        </div>
+        {/* 数字弹出区域 — hover 时数字放大浮出 */}
+        <div className="stat-number-wrap">
+          <div className="text-2xl font-bold text-foreground tabular-nums tracking-tight stat-number">
+            {displayValue}
           </div>
         </div>
-        <div className="text-2xl font-bold text-foreground tabular-nums tracking-tight">
-          {displayValue}
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground transition-colors duration-300 group-hover:text-foreground/50">
+        <p className="mt-1 text-sm text-muted-foreground">
           {description}
         </p>
-        {/* 底部光带 */}
-        <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-primary/60 via-primary/30 to-transparent transition-all duration-500 ease-out group-hover:w-full" />
       </SpotlightCard>
     </motion.div>
   );
