@@ -2,11 +2,12 @@ import { Activity, BarChart3, CheckCircle, Mail, RefreshCcw, UserRound } from 'l
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppShell } from '../components/AppShell';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { api } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
 import type { UserStatsResponse } from '../types/oj';
+import { SpotlightCard } from '../components/react-bits';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -70,7 +71,7 @@ export default function ProfilePage() {
         </div>
 
         {error ? (
-          <div className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
+          <div className="mb-6 glass-card px-4 py-3 text-sm text-destructive border-destructive/20">{error}</div>
         ) : null}
 
         <section className="grid gap-4 grid-cols-2 lg:grid-cols-4">
@@ -79,52 +80,52 @@ export default function ProfilePage() {
             value={user.username}
             description="当前登录账号"
             icon={<UserRound className="size-4 text-muted-foreground" />}
+            spotlightColor="rgba(255, 255, 255, 0.08)"
           />
           <ProfileStatCard
             title="邮箱"
             value={user.email}
             description="账户绑定邮箱"
             icon={<Mail className="size-4 text-muted-foreground" />}
+            spotlightColor="rgba(255, 255, 255, 0.08)"
           />
           <ProfileStatCard
             title="总提交数"
             value={String(stats?.total_submissions ?? 0)}
             description={`已通过 ${stats?.ac_count ?? 0} 次`}
             icon={<Activity className="size-4 text-muted-foreground" />}
+            spotlightColor="rgba(255, 255, 255, 0.08)"
           />
           <ProfileStatCard
             title="通过率"
             value={acRateDisplay}
             description={`已尝试 ${stats?.attempted_problems ?? 0} 题 / 已通过 ${stats?.ac_problems ?? 0} 题`}
             icon={<CheckCircle className="size-4 text-muted-foreground" />}
+            spotlightColor="rgba(255, 255, 255, 0.08)"
           />
         </section>
 
         <section className="mt-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <BarChart3 className="size-5 text-muted-foreground" />
-                <CardTitle>做题统计</CardTitle>
+          <div className="glass-card p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <BarChart3 className="size-5 text-primary" />
+              <h3 className="text-lg font-semibold">做题统计</h3>
+            </div>
+            <div className="grid gap-4 grid-cols-3">
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 text-center">
+                <div className="text-3xl font-bold text-primary">{stats?.attempted_problems ?? 0}</div>
+                <div className="mt-1 text-sm text-muted-foreground">已尝试题目</div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 grid-cols-3">
-                <div className="rounded-lg border p-4 text-center">
-                  <div className="text-3xl font-bold text-primary">{stats?.attempted_problems ?? 0}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">已尝试题目</div>
-                </div>
-                <div className="rounded-lg border p-4 text-center">
-                  <div className="text-3xl font-bold" style={{ color: 'var(--status-ac)' }}>{stats?.ac_problems ?? 0}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">已通过题目</div>
-                </div>
-                <div className="rounded-lg border p-4 text-center">
-                  <div className="text-3xl font-bold" style={{ color: 'var(--status-wa)' }}>{stats?.total_submissions ?? 0}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">总提交次数</div>
-                </div>
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 text-center">
+                <div className="text-3xl font-bold" style={{ color: 'var(--status-ac)' }}>{stats?.ac_problems ?? 0}</div>
+                <div className="mt-1 text-sm text-muted-foreground">已通过题目</div>
               </div>
-            </CardContent>
-          </Card>
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 text-center">
+                <div className="text-3xl font-bold" style={{ color: 'var(--status-wa)' }}>{stats?.total_submissions ?? 0}</div>
+                <div className="mt-1 text-sm text-muted-foreground">总提交次数</div>
+              </div>
+            </div>
+          </div>
         </section>
       </div>
     </AppShell>
@@ -136,22 +137,22 @@ function ProfileStatCard({
   value,
   description,
   icon,
+  spotlightColor,
 }: {
   title: string;
   value: string;
   description: string;
   icon: ReactNode;
+  spotlightColor?: string;
 }) {
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-xs uppercase tracking-widest text-muted-foreground">{title}</span>
-          {icon}
-        </div>
-        <div className="break-all text-2xl font-semibold">{value}</div>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
+    <SpotlightCard className="p-5 sm:p-6" spotlightColor={spotlightColor}>
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-xs uppercase tracking-widest text-muted-foreground">{title}</span>
+        {icon}
+      </div>
+      <div className="break-all text-2xl font-bold text-foreground">{value}</div>
+      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+    </SpotlightCard>
   );
 }

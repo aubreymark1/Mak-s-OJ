@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { useAuthStore } from '../store/authStore';
+import { Aurora } from '../components/react-bits';
 
 type AuthMode = 'login' | 'register';
 
@@ -37,25 +38,33 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-6 py-12 text-foreground">
-      <div className="pointer-events-none absolute inset-0 opacity-5" style={{ background: 'radial-gradient(circle at top, color-mix(in srgb, var(--primary) 10%, transparent), transparent 35%)' }} />
+      {/* Aurora background */}
+      <div className="absolute inset-0 opacity-40">
+        <Aurora colorStops={['#6366f1', '#a855f7', '#ec4899']} amplitude={1.5} blend={0.5} speed={0.6} />
+      </div>
 
-      <div className="relative w-full max-w-xl rounded-xl border bg-card p-8 shadow-lg">
+      {/* Ambient glow */}
+      <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(99, 102, 241, 0.12), transparent)' }} />
+
+      <div className="relative w-full max-w-xl glass-card p-8 shadow-2xl shadow-black/20">
         <div className="mb-8 flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
-            <Code2 className="h-6 w-6 text-primary-foreground" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-foreground">
+            <Code2 className="h-6 w-6 text-background" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold font-[var(--font-display)]">Mak&apos;s OJ 登录</h1>
+            <h1 className="text-2xl font-bold">Mak&apos;s OJ</h1>
             <p className="text-sm text-muted-foreground">登录后即可提交评测、查看个人学情。</p>
           </div>
         </div>
 
-        <div className="mb-6 grid grid-cols-2 gap-2 rounded-lg bg-muted p-1">
+        <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl bg-white/[0.04] p-1 border border-white/[0.06]">
           <button
             type="button"
             onClick={() => setMode('login')}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-              mode === 'login' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+              mode === 'login'
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             登录
@@ -63,8 +72,10 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setMode('register')}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-              mode === 'register' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+              mode === 'register'
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             注册
@@ -78,7 +89,7 @@ export default function LoginPage() {
               id="username"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              className="w-full rounded-md border bg-input-background px-3 py-2 text-foreground outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-foreground outline-none transition focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:bg-white/[0.06]"
               placeholder="请输入用户名"
               required
             />
@@ -93,7 +104,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  className="w-full rounded-md border bg-input-background px-3 py-2 text-foreground outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+                  className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-foreground outline-none transition focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:bg-white/[0.06]"
                   placeholder="例如：you@example.com"
                   required
                 />
@@ -104,7 +115,7 @@ export default function LoginPage() {
                   id="fullName"
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
-                  className="w-full rounded-md border bg-input-background px-3 py-2 text-foreground outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+                  className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-foreground outline-none transition focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:bg-white/[0.06]"
                   placeholder="你希望展示在系统中的名字"
                 />
               </div>
@@ -118,15 +129,15 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-md border bg-input-background px-3 py-2 text-foreground outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-foreground outline-none transition focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:bg-white/[0.06]"
               placeholder={mode === 'login' ? '请输入密码' : '至少 6 位'}
               required
             />
           </div>
 
-          {error ? <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div> : null}
+          {error ? <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive backdrop-blur-sm">{error}</div> : null}
 
-          <Button type="submit" disabled={isLoading} className="w-full">
+          <Button type="submit" disabled={isLoading} className="w-full bg-foreground text-background hover:bg-foreground/90">
             {isLoading ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
             ) : mode === 'login' ? (

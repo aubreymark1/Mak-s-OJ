@@ -13,13 +13,6 @@ body {
   margin: 0;
   min-width: 320px;
   background:
-    radial-gradient(circle at top right, rgba(0, 0, 0, 0.015), transparent 30%),
-    var(--background);
-}
-
-.dark body,
-body.dark {
-  background:
     radial-gradient(circle at top right, rgba(255, 255, 255, 0.02), transparent 30%),
     var(--background);
 }

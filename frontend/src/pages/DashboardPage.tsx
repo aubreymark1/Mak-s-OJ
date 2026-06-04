@@ -3,10 +3,10 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { useNavigate } from 'react-router-dom';
 import { AppShell } from '../components/AppShell';
 import { ProblemTable } from '../components/ProblemTable';
-import { Card, CardContent } from '../components/ui/card';
 import { api } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
 import type { ProblemListItem, ProblemListResponse } from '../types/oj';
+import { Aurora, SpotlightCard, BlurText } from '../components/react-bits';
 
 const PAGE_SIZE = 20;
 
@@ -65,25 +65,47 @@ export default function DashboardPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-[1800px] px-4 sm:px-6 py-6">
+        {/* Hero Section with Aurora */}
+        <div className="relative mb-10 overflow-hidden rounded-2xl border border-white/[0.06]" style={{ minHeight: 180 }}>
+          <Aurora colorStops={['#6366f1', '#a855f7', '#ec4899']} amplitude={1.2} blend={0.4} speed={0.8} />
+          <div className="relative z-10 px-8 py-10 sm:px-12 sm:py-14">
+            <BlurText
+              text="Mak's OJ"
+              delay={80}
+              animateBy="words"
+              direction="top"
+              className="text-4xl sm:text-5xl font-bold text-white mb-2"
+            />
+            {isAuthenticated && user && (
+              <p className="text-white/50 text-sm">
+                Welcome back, {user.username}
+              </p>
+            )}
+          </div>
+        </div>
+
         {/* Stats Summary */}
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 mb-6">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 mb-8">
           <StatCard
             title="题目数量"
             value={String(problemCount)}
-            description="当前前端可读取的题目总数"
+            description="当前可读取的题目总数"
             icon={<Binary className="size-4 text-muted-foreground" />}
+            spotlightColor="rgba(255, 255, 255, 0.08)"
           />
           <StatCard
             title="标签覆盖"
             value={String(taggedProblemCount)}
-            description="当前页里已经带标签的题目数量"
+            description="已带标签的题目数量"
             icon={<BrainCircuit className="size-4 text-muted-foreground" />}
+            spotlightColor="rgba(255, 255, 255, 0.08)"
           />
           <StatCard
             title="当前状态"
             value={isAuthenticated && user ? user.username : '游客'}
             description={isAuthenticated ? '已登录，可直接提交评测。' : '登录后可提交评测并查看学习画像。'}
             icon={<Sparkles className="size-4 text-muted-foreground" />}
+            spotlightColor="rgba(255, 255, 255, 0.08)"
           />
         </div>
 
@@ -100,13 +122,13 @@ export default function DashboardPage() {
           </div>
 
           {loading ? (
-            <div className="rounded-lg border p-8 text-sm text-muted-foreground text-center">正在加载题目列表...</div>
+            <div className="glass-card p-8 text-sm text-muted-foreground text-center">正在加载题目列表...</div>
           ) : error ? (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-8 text-sm text-destructive text-center">{error}</div>
+            <div className="glass-card p-8 text-sm text-destructive text-center border-destructive/20">{error}</div>
           ) : (
             <div className="space-y-4">
               <ProblemTable problems={problems} onSelect={(problemId) => navigate(`/problem/${problemId}`)} />
-              <div className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="glass-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-sm text-muted-foreground">
                   第 <span className="font-mono text-foreground">{currentPage}</span> /{' '}
                   <span className="font-mono text-foreground">{totalPages}</span> 页
@@ -116,7 +138,7 @@ export default function DashboardPage() {
                     type="button"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="rounded-md border px-3 py-1.5 text-sm transition hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-sm transition hover:bg-white/[0.08] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     上一页
                   </button>
@@ -125,10 +147,10 @@ export default function DashboardPage() {
                       key={page}
                       type="button"
                       onClick={() => handlePageChange(page)}
-                      className={`min-w-9 rounded-md border px-3 py-1.5 text-sm transition ${
+                      className={`min-w-9 rounded-lg px-3 py-1.5 text-sm transition ${
                         page === currentPage
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'hover:bg-accent hover:text-accent-foreground'
+                          ? 'bg-foreground text-background'
+                          : 'border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.08] hover:text-foreground'
                       }`}
                     >
                       {page}
@@ -138,7 +160,7 @@ export default function DashboardPage() {
                     type="button"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="rounded-md border px-3 py-1.5 text-sm transition hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-sm transition hover:bg-white/[0.08] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     下一页
                   </button>
@@ -168,22 +190,22 @@ function StatCard({
   value,
   description,
   icon,
+  spotlightColor,
 }: {
   title: string;
   value: string;
   description: string;
   icon: ReactNode;
+  spotlightColor?: string;
 }) {
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-xs uppercase tracking-widest text-muted-foreground">{title}</span>
-          {icon}
-        </div>
-        <div className="text-2xl font-semibold">{value}</div>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
+    <SpotlightCard className="p-5 sm:p-6" spotlightColor={spotlightColor}>
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-xs uppercase tracking-widest text-muted-foreground">{title}</span>
+        {icon}
+      </div>
+      <div className="text-2xl font-bold text-foreground">{value}</div>
+      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+    </SpotlightCard>
   );
 }

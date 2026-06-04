@@ -1,6 +1,6 @@
 # Mak's OJ 系统文档
 
-更新时间：2026-05-28
+更新时间：2026-06-04
 当前版本：v1.0.0
 公网地址：[http://43.165.172.190/](http://43.165.172.190/)
 
@@ -316,6 +316,55 @@ ssh quant-system-ubuntu "sudo rm -rf /opt/matrix_oj_clone/frontend_dist && sudo 
 
 ---
 
+### 2026-06-02 新增：第14周Matrix作业变式题目（6道）
+
+基于 Matrix 平台第14周作业（继承与多态）的易错点和知识点，生成6道变式题目并上传到 OJ 系统。
+
+**题目列表**（id=138~143）：
+
+| id | slug | 标题 | 对应原题 | 难度 |
+|----|------|------|----------|------|
+| 138 | `week14-variant-library-system` | 图书管理系统 | 课堂1-交通工具管理系统 | Medium |
+| 139 | `week14-variant-petshop-system` | 宠物店管理系统 | 课堂2-动物园管理系统 | Medium |
+| 140 | `week14-variant-server-cluster` | 服务器集群管理系统 | 课堂3-电子设备资产管理系统 | Hard |
+| 141 | `week14-variant-tool-rental` | 工具租赁管理系统 | 课后1-仓库货物管理系统 | Easy |
+| 142 | `week14-variant-beverage-order` | 饮品订购系统 | 课后2-餐饮管理系统 | Easy |
+| 143 | `week14-variant-furniture-warehouse` | 家具仓储管理系统 | 课后3-图形接口系统 | Medium |
+
+**考察知识点**：
+- 抽象类与纯虚函数
+- `final` 关键字（类级别和方法级别）
+- RTTI：`typeid` 与 `dynamic_cast`
+- 多继承（接口继承）
+- 内存管理（new/delete、erase from vector）
+- 多态与虚函数调度
+- `override` 关键字
+- 优先级打平逻辑
+
+**随机测试**：所有题目均配置了 `generator_code` + `std_code`，支持 10 轮 fuzzing 对拍。
+
+**导入脚本**：`D:\OJ\import_week14_matrix_variants.py`
+
+### 2026-06-02 修复：fuzzing 随机测试数据重复问题
+
+**问题**：所有使用 `srand(time(0))` 的 generator，fuzzing 10 轮产生的随机数据完全相同。
+
+**根因**：`time(0)` 精度为秒，10 轮 fuzzing 在同一秒内完成，种子相同导致输出重复。
+
+**修复**：
+- 将 `srand(time(0))` 替换为 `chrono::high_resolution_clock` 纳秒级精度种子：
+  ```cpp
+  unsigned seed = chrono::high_resolution_clock::now().time_since_epoch().count();
+  srand(seed);
+  ```
+- 修复了 OJ 系统中 11 道题目的 generator（id=66, 70, 71, 72, 73, 132~137）
+- 修复了 6 道新上传的第14周变式题目（id=138~143）
+- 修复了本地 4 个 generator 源文件
+- 修复了 2 个 import 脚本（import_week13_class.py、import_week10_practice.py）
+- 更新了 PROBLEM_SPEC.md 文档，添加注意事项
+
+---
+
 ### 2026-05-28 修复：编辑器快速输入时光标跳转到底部
 
 问题现象：
@@ -330,3 +379,37 @@ ssh quant-system-ubuntu "sudo rm -rf /opt/matrix_oj_clone/frontend_dist && sudo 
 - 将 Monaco Editor 从受控模式（`value`）切换为非受控模式（`defaultValue`），让 Monaco 自行管理编辑状态。
 - 新增 `editorVersion` 状态计数器，在恢复提交等外部内容变更时递增，通过 `key` 强制编辑器重新挂载以加载新内容。
 - 文件：`frontend/src/components/WorkspacePanels.tsx`、`frontend/src/pages/ProblemWorkspacePage.tsx`
+
+### 2026-06-04 前端视觉升级：React Bits 组件集成（v1.2.0）
+
+**改造目标**：从标准 shadcn/ui 风格升级为暗色科技感 + 玻璃拟态 + 精致微动效的高端设计风格，参考 Trae.ai、OpenAI Codex、Anthropic Glasswing 等 AI 产品页面。
+
+**新增依赖**：
+- `ogl`（WebGL 渲染库，Aurora 极光背景）
+- `gsap`（动画库，备用）
+
+**新增 React Bits 组件**（`src/components/react-bits/`）：
+- `SpotlightCard` — 鼠标跟随光效卡片，替代普通 Card
+- `GradientText` — 渐变色动画文字
+- `BlurText` — 模糊入场动画文字
+- `ShinyText` — 光泽扫过效果
+- `StarBorder` — 星光边框按钮
+- `Aurora` — WebGL 极光背景
+- `ClickSpark` — 点击火花效果
+
+**主题系统改造**（`theme.css`）：
+- 深色背景从 `oklch(0.145 0 0)` 改为 `#06060e`（深 navy-black）
+- 主色调从纯白/纯黑改为靛蓝紫 `#818cf8`
+- 新增品牌渐变变量 `--brand-gradient`（蓝→紫→粉）
+- 新增光晕变量 `--glow-primary` / `--glow-accent`
+- 卡片改为半透明 `rgba(255,255,255,0.03)` + 微妙边框
+- 新增 `.glass-card` / `.text-gradient` / `.glow-primary` 工具类
+- 暗色模式 body 添加径向渐变环境光
+
+**页面改造**：
+- **Navbar**：渐变 Logo、文字渐变品牌名、motion 活跃指示器、用户头像渐变圆形、登录按钮渐变背景
+- **DashboardPage**：Aurora 极光 Hero 区 + BlurText 标题 + GradientText 副标题、SpotlightCard 统计卡、glass-card 分页区
+- **LoginPage**：Aurora 全屏背景、glass-card 登录卡、渐变标签切换、渐变输入框焦点、渐变提交按钮
+- **ProfilePage**：SpotlightCard 统计卡、glass-card 做题统计区
+
+**构建验证**：TypeScript 零错误、Vite 生产构建通过

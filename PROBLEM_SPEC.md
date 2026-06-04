@@ -167,11 +167,12 @@ judge_cases = [
 ```cpp
 #include <iostream>
 #include <cstdlib>
-#include <ctime>
+#include <chrono>
 using namespace std;
 
 int main() {
-    srand(time(0));
+    unsigned seed = chrono::high_resolution_clock::now().time_since_epoch().count();
+    srand(seed);
     int n = rand() % 10 + 1;
     cout << n << endl;
     for (int i = 0; i < n; i++) {
@@ -181,6 +182,8 @@ int main() {
     return 0;
 }
 ```
+
+**注意**：不要使用 `srand(time(0))`，因为 `time(0)` 精度为秒，fuzzing 的 10 轮在同一秒内完成会导致种子相同、输出重复。必须使用 `chrono::high_resolution_clock` 获取纳秒级精度种子。
 
 ### 6.3 std_code
 

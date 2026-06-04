@@ -27,7 +27,7 @@ interface ProblemTableProps {
 
 export function ProblemTable({ problems, onSelect }: ProblemTableProps) {
   return (
-    <div className="rounded-lg border shadow-sm overflow-hidden">
+    <div className="glass-card overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
@@ -47,7 +47,7 @@ export function ProblemTable({ problems, onSelect }: ProblemTableProps) {
               animate="visible"
               transition={{ delay: index * 0.03 }}
               onClick={() => onSelect(problem.id)}
-              className="cursor-pointer hover:bg-muted/50 border-b transition-colors"
+              className="cursor-pointer hover:bg-white/[0.04] border-b border-white/[0.04] transition-colors"
             >
               <TableCell>
                 <StatusBadge userStatus={problem.user_status} />
