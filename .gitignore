@@ -57,6 +57,10 @@ desktop.ini
 !.vscode/extensions.json
 .idea/
 
+# ── Internal docs (contain server IPs, credentials) ─────────────────────────
+SYSTEM.md
+SERVER_GUIDE.md
+
 # ── Project-specific exclusions ──────────────────────────────────────────────
 
 # Temporary working files and directories
