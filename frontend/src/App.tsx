@@ -4,9 +4,6 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminProblemEditorPage from './pages/admin/AdminProblemEditorPage';
 import DashboardPage from './pages/DashboardPage';
-import ExamCreatePage from './pages/Exam/ExamCreatePage';
-import ExamPage from './pages/Exam/ExamPage';
-import ExamResultsPage from './pages/Exam/ExamResultsPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import ProblemWorkspacePage from './pages/ProblemWorkspacePage';
@@ -31,14 +28,6 @@ function AdminRoute({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  return <>{children}</>;
-}
-
 function AnimatedRoutes() {
   const location = useLocation();
 
@@ -49,9 +38,6 @@ function AnimatedRoutes() {
         <Route path="/login" element={<PageShell><LoginPage /></PageShell>} />
         <Route path="/profile" element={<PageShell><ProfilePage /></PageShell>} />
         <Route path="/problem/:id" element={<PageShell><ProblemWorkspacePage /></PageShell>} />
-        <Route path="/exam/create" element={<ProtectedRoute><PageShell><ExamCreatePage /></PageShell></ProtectedRoute>} />
-        <Route path="/exam/:examId" element={<ProtectedRoute><PageShell><ExamPage /></PageShell></ProtectedRoute>} />
-        <Route path="/exam/:examId/results" element={<ProtectedRoute><PageShell><ExamResultsPage /></PageShell></ProtectedRoute>} />
         <Route path="/admin" element={<AdminRoute><PageShell><AdminDashboardPage /></PageShell></AdminRoute>} />
         <Route path="/admin/problems/new" element={<AdminRoute><PageShell><AdminProblemEditorPage /></PageShell></AdminRoute>} />
         <Route path="/admin/problems/:id" element={<AdminRoute><PageShell><AdminProblemEditorPage /></PageShell></AdminRoute>} />

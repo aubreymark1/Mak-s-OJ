@@ -299,61 +299,6 @@ class AdminProblemListResponse(StrictSchema):
     page_size: int
 
 
-# ── Exam Schemas ────────────────────────────────────────────────────────────────
-
-from models import ExamStatus  # noqa: E402
-
-
-class ExamCreate(StrictSchema):
-    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
-    problem_ids: list[int] = Field(min_length=1)
-    duration_minutes: int = Field(ge=1, le=1440)
-
-
-class ExamRead(StrictSchema):
-    id: int
-    user_id: int
-    title: str
-    problem_ids: list[int]
-    duration_minutes: int
-    start_time: datetime | None
-    end_time: datetime | None
-    total_paused_seconds: int
-    status: ExamStatus
-    created_at: datetime
-    updated_at: datetime
-
-
-class ExamProblemResult(StrictSchema):
-    problem_id: int
-    slug: str
-    status: SubmissionStatus | None
-    score: float
-    passed: bool
-
-
-class ExamResults(StrictSchema):
-    exam_id: int
-    title: str
-    duration_minutes: int
-    elapsed_seconds: int
-    total_score: float
-    passed_count: int
-    total_problems: int
-    problems: list[ExamProblemResult]
-
-
-class ExamListItem(StrictSchema):
-    id: int
-    title: str
-    problem_ids: list[int]
-    duration_minutes: int
-    status: ExamStatus
-    total_score: float | None
-    created_at: datetime
-    updated_at: datetime
-
-
 def validate_multifile_payload(value: MultiFileCode) -> MultiFileCode:
     if not value:
         raise ValueError("At least one source file must be supplied.")

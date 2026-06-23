@@ -58,7 +58,6 @@ class User(TimestampMixin, Base):
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     submissions: Mapped[list[Submission]] = relationship(back_populates="user", cascade="all, delete-orphan")
-    exams: Mapped[list[Exam]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 
 class Problem(TimestampMixin, Base):
@@ -128,40 +127,3 @@ class Submission(TimestampMixin, Base):
 
     user: Mapped[User] = relationship(back_populates="submissions")
     problem: Mapped[Problem] = relationship(back_populates="submissions")
-
-
-class ExamStatus(str, enum.Enum):
-    PENDING = "pending"
-    IN_PROGRESS = "in_progress"
-    PAUSED = "paused"
-    COMPLETED = "completed"
-
-
-exam_status_enum = Enum(
-    ExamStatus,
-    name="exam_status",
-    values_callable=lambda enum_cls: [item.value for item in enum_cls],
-)
-
-
-class Exam(TimestampMixin, Base):
-    __tablename__ = "exams"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    title: Mapped[str] = mapped_column(String(255), nullable=False)
-    problem_ids: Mapped[list[int]] = mapped_column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
-    duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
-    start_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    total_paused_seconds: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
-    status: Mapped[ExamStatus] = mapped_column(
-        exam_status_enum,
-        nullable=False,
-        server_default=text("'pending'::exam_status"),
-    )
-
-    user: Mapped[User] = relationship(back_populates="exams")
-
-
-# No more classes below — relationship backpopulates must be on User class above
