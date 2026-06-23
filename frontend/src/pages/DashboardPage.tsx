@@ -1,4 +1,4 @@
-import { Binary, BrainCircuit, Sparkles } from 'lucide-react';
+import { Binary, BrainCircuit, PenTool, Plus, Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -153,8 +153,18 @@ export default function DashboardPage() {
               <h2 className="text-xl font-semibold">题目列表</h2>
               <p className="text-sm text-muted-foreground">点击任意题目即可进入代码工作台。</p>
             </div>
-            <div className="text-sm text-muted-foreground">
-              {pageRangeLabel}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('/exam/create')}
+                className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary/20 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)]"
+              >
+                <PenTool className="h-4 w-4" />
+                考试模式
+              </button>
+              <div className="text-sm text-muted-foreground">
+                {pageRangeLabel}
+              </div>
             </div>
           </div>
 
