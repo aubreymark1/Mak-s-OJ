@@ -24,7 +24,7 @@ export default function Navbar() {
   const navLinks = [
     { to: '/', label: '题目大厅', icon: Home },
     { to: '/profile', label: '个人主页', icon: BarChart3 },
-    ...(isAuthenticated ? [{ to: '/exam/create', label: '考试', icon: PenTool }] : []),
+    ...(isAuthenticated ? [{ to: '/exams', label: '考试', icon: PenTool }] : []),
     ...(user?.is_admin ? [{ to: '/admin', label: '后台管理', icon: Shield }] : []),
   ];
 
@@ -85,7 +85,7 @@ export default function Navbar() {
                     <BarChart3 className="size-4 mr-2" />
                     个人主页
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/exam/create')}>
+                  <DropdownMenuItem onClick={() => navigate('/exams')}>
                     <PenTool className="size-4 mr-2" />
                     考试
                   </DropdownMenuItem>
