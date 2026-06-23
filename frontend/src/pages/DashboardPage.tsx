@@ -156,7 +156,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => navigate('/exams')}
+                onClick={() => navigate('/exam/create')}
                 className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary/20 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)]"
               >
                 <PenTool className="h-4 w-4" />

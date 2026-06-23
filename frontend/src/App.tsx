@@ -5,7 +5,6 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminProblemEditorPage from './pages/admin/AdminProblemEditorPage';
 import DashboardPage from './pages/DashboardPage';
 import ExamCreatePage from './pages/Exam/ExamCreatePage';
-import ExamListPage from './pages/Exam/ExamListPage';
 import ExamPage from './pages/Exam/ExamPage';
 import ExamResultsPage from './pages/Exam/ExamResultsPage';
 import LoginPage from './pages/LoginPage';
@@ -50,7 +49,6 @@ function AnimatedRoutes() {
         <Route path="/login" element={<PageShell><LoginPage /></PageShell>} />
         <Route path="/profile" element={<PageShell><ProfilePage /></PageShell>} />
         <Route path="/problem/:id" element={<PageShell><ProblemWorkspacePage /></PageShell>} />
-        <Route path="/exams" element={<ProtectedRoute><PageShell><ExamListPage /></PageShell></ProtectedRoute>} />
         <Route path="/exam/create" element={<ProtectedRoute><PageShell><ExamCreatePage /></PageShell></ProtectedRoute>} />
         <Route path="/exam/:examId" element={<ProtectedRoute><PageShell><ExamPage /></PageShell></ProtectedRoute>} />
         <Route path="/exam/:examId/results" element={<ProtectedRoute><PageShell><ExamResultsPage /></PageShell></ProtectedRoute>} />
