@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from collections import defaultdict
 
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/api/problems", tags=["problems"])
 @router.get("", response_model=ProblemListResponse, status_code=status.HTTP_200_OK)
 async def list_problems(
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page_size: int = Query(default=20, ge=1, le=1000),
     session: AsyncSession = Depends(get_db_session),
     current_user: User | None = Depends(get_optional_current_user),
 ) -> ProblemListResponse:

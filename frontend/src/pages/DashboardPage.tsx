@@ -1,13 +1,18 @@
-import { Binary, BrainCircuit, Sparkles } from 'lucide-react';
+import { Binary, BrainCircuit, Sparkles, Search, FolderKanban, Tag as TagIcon, Check } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppShell } from '../components/AppShell';
 import { ProblemTable } from '../components/ProblemTable';
 import { api } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
 import type { ProblemListItem, ProblemListResponse } from '../types/oj';
 import { Aurora, SpotlightCard, BlurText } from '../components/react-bits';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../components/ui/accordion';
+import { Progress } from '../components/ui/progress';
+import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Input } from '../components/ui/input';
+import { Button } from '../components/ui/button';
 
 /** 数字递增动画 hook */
 function useCountUp(target: number, duration = 1600, enabled = true) {
@@ -42,27 +47,25 @@ function useCountUp(target: number, duration = 1600, enabled = true) {
   return value;
 }
 
-const PAGE_SIZE = 20;
-
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
   const [problems, setProblems] = useState<ProblemListItem[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalProblems, setTotalProblems] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [groupType, setGroupType] = useState<'week' | 'tag'>('week');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [openValues, setOpenValues] = useState<string[]>([]);
 
-  const loadProblems = useCallback(async (page: number) => {
+  const loadProblems = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const { data } = await api.get<ProblemListResponse>('/problems', {
-        params: { page, page_size: PAGE_SIZE },
+        // 一次性获取所有题目以便全局分组与搜索
+        params: { page: 1, page_size: 1000 },
       });
       setProblems(data.items);
-      setCurrentPage(data.page);
-      setTotalProblems(data.total);
     } catch {
       setError('题目列表加载失败，请确认前端代理和后端服务已连接。');
     } finally {
@@ -71,30 +74,131 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    void loadProblems(currentPage);
-  }, [currentPage, isAuthenticated, loadProblems, user?.id]);
+    void loadProblems();
+  }, [isAuthenticated, loadProblems, user?.id]);
 
-  const problemCount = useMemo(() => totalProblems, [totalProblems]);
+  // 搜索关键字过滤
+  const filteredProblems = useMemo(() => {
+    if (!searchQuery.trim()) return problems;
+    const query = searchQuery.toLowerCase().trim();
+    return problems.filter((p) => {
+      return (
+        p.title.toLowerCase().includes(query) ||
+        p.slug.toLowerCase().includes(query) ||
+        p.id.toString().includes(query) ||
+        p.tags.some((t) => t.toLowerCase().includes(query))
+      );
+    });
+  }, [problems, searchQuery]);
+
+  // 从题目名称（如 `[第九周] xxx`）或 slug（如 `week9-xxx`）中动态解析教学周次
+  const extractWeek = useCallback((problem: ProblemListItem): string => {
+    const titleMatch = problem.title.match(/\[(第[^\]]+周|Week\s*\d+|[^\]]+考试|[^\]]+测验)\]/i);
+    if (titleMatch) {
+      return titleMatch[1];
+    }
+    const slugMatch = problem.slug.match(/^week(\d+)/i);
+    if (slugMatch) {
+      return `第${slugMatch[1]}周`;
+    }
+    if (problem.slug.includes('midterm') || problem.title.includes('期中')) {
+      return '期中考试 / 测验';
+    }
+    return '公开题库 / 其他';
+  }, []);
+
+  // 周次自定义排序规则
+  const sortWeeks = useCallback((a: string, b: string): number => {
+    const getWeight = (s: string) => {
+      if (s.includes('期中')) return 1000;
+      if (s.includes('其他') || s.includes('公开')) return 2000;
+      const numMatch = s.match(/\d+/);
+      if (numMatch) return parseInt(numMatch[0]);
+
+      const cnNums: Record<string, number> = {
+        '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
+        '十一': 11, '十二': 12, '十三': 13, '十四': 14, '十五': 15, '十六': 16, '十七': 17, '十八': 18
+      };
+      for (const key in cnNums) {
+        if (s.includes(key)) return cnNums[key];
+      }
+      return 999;
+    };
+    return getWeight(a) - getWeight(b);
+  }, []);
+
+  // 按周次分组
+  const weekGroups = useMemo(() => {
+    const groups: Record<string, ProblemListItem[]> = {};
+    filteredProblems.forEach((problem) => {
+      const week = extractWeek(problem);
+      if (!groups[week]) groups[week] = [];
+      groups[week].push(problem);
+    });
+    Object.keys(groups).forEach((key) => {
+      groups[key].sort((a, b) => b.id - a.id);
+    });
+    return groups;
+  }, [filteredProblems, extractWeek]);
+
+  // 按知识点/标签多重归类分组
+  const tagGroups = useMemo(() => {
+    const groups: Record<string, ProblemListItem[]> = {};
+    filteredProblems.forEach((problem) => {
+      const cleanTags = problem.tags.filter(
+        (t) => !['c++', 'c++语言', 'cpp'].includes(t.toLowerCase())
+      );
+      if (cleanTags.length === 0) {
+        const fallback = '其他知识点';
+        if (!groups[fallback]) groups[fallback] = [];
+        groups[fallback].push(problem);
+      } else {
+        cleanTags.forEach((tag) => {
+          if (!groups[tag]) groups[tag] = [];
+          if (!groups[tag].some((p) => p.id === problem.id)) {
+            groups[tag].push(problem);
+          }
+        });
+      }
+    });
+    Object.keys(groups).forEach((key) => {
+      groups[key].sort((a, b) => b.id - a.id);
+    });
+    return groups;
+  }, [filteredProblems]);
+
+  // 排序后的分组 Key
+  const sortedGroupKeys = useMemo(() => {
+    if (groupType === 'week') {
+      return Object.keys(weekGroups).sort(sortWeeks);
+    } else {
+      return Object.keys(tagGroups).sort();
+    }
+  }, [groupType, weekGroups, tagGroups, sortWeeks]);
+
+  // 当前激活的分组集合
+  const activeGroups = useMemo(() => {
+    return groupType === 'week' ? weekGroups : tagGroups;
+  }, [groupType, weekGroups, tagGroups]);
+
+  // 切换分组维度时，默认展开最新的一个分组
+  const lastGroupType = useRef<'week' | 'tag'>('week');
+  useEffect(() => {
+    if (sortedGroupKeys.length > 0) {
+      if (lastGroupType.current !== groupType || openValues.length === 0) {
+        // 展开排序后的最后一个（通常为最新周次或末尾标签）
+        setOpenValues([sortedGroupKeys[sortedGroupKeys.length - 1]]);
+        lastGroupType.current = groupType;
+      }
+    }
+  }, [groupType, sortedGroupKeys]);
+
+  const handleExpandAll = () => setOpenValues(sortedGroupKeys);
+  const handleCollapseAll = () => setOpenValues([]);
+
+  // 统计数据
+  const problemCount = useMemo(() => problems.length, [problems]);
   const taggedProblemCount = useMemo(() => problems.filter((problem) => problem.tags.length > 0).length, [problems]);
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(totalProblems / PAGE_SIZE)), [totalProblems]);
-  const visiblePages = useMemo(() => getVisiblePages(currentPage, totalPages), [currentPage, totalPages]);
-  const pageRangeLabel = useMemo(() => {
-    if (!totalProblems || !problems.length) {
-      return '当前没有可展示的题目。';
-    }
-
-    const start = (currentPage - 1) * PAGE_SIZE + 1;
-    const end = start + problems.length - 1;
-    return `当前显示第 ${start}-${end} 题，共 ${totalProblems} 题`;
-  }, [currentPage, problems.length, totalProblems]);
-
-  function handlePageChange(page: number) {
-    if (page < 1 || page > totalPages || page === currentPage) {
-      return;
-    }
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
 
   return (
     <AppShell>
@@ -146,80 +250,131 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Problem List */}
-        <section>
-          <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        {/* Header & Controls */}
+        <section className="space-y-6">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
-              <h2 className="text-xl font-semibold">题目列表</h2>
-              <p className="text-sm text-muted-foreground">点击任意题目即可进入代码工作台。</p>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {pageRangeLabel}
+              <h2 className="text-xl font-semibold">题库中心</h2>
+              <p className="text-sm text-muted-foreground">根据教学进度或知识分类查找题目，点击即可进入开发工作台。</p>
             </div>
           </div>
 
-          {loading ? (
-            <div className="glass-card p-8 text-sm text-muted-foreground text-center">正在加载题目列表...</div>
-          ) : error ? (
-            <div className="glass-card p-8 text-sm text-destructive text-center border-destructive/20">{error}</div>
-          ) : (
-            <div className="space-y-4">
-              <ProblemTable problems={problems} onSelect={(problemId) => navigate(`/problem/${problemId}`)} />
-              <div className="glass-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-sm text-muted-foreground">
-                  第 <span className="font-mono text-foreground">{currentPage}</span> /{' '}
-                  <span className="font-mono text-foreground">{totalPages}</span> 页
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-sm transition hover:bg-white/[0.08] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    上一页
-                  </button>
-                  {visiblePages.map((page) => (
-                    <button
-                      key={page}
-                      type="button"
-                      onClick={() => handlePageChange(page)}
-                      className={`min-w-9 rounded-lg px-3 py-1.5 text-sm transition ${
-                        page === currentPage
-                          ? 'bg-foreground text-background'
-                          : 'border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.08] hover:text-foreground'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-sm transition hover:bg-white/[0.08] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    下一页
-                  </button>
-                </div>
+          {/* Group Tabs & Controls Toolbar */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between glass-card p-4">
+            <Tabs value={groupType} onValueChange={(val) => setGroupType(val as 'week' | 'tag')} className="w-fit">
+              <TabsList className="bg-white/[0.03] border border-white/[0.06] rounded-xl">
+                <TabsTrigger value="week" className="flex items-center gap-2">
+                  <FolderKanban className="size-4" />
+                  按课程周次
+                </TabsTrigger>
+                <TabsTrigger value="tag" className="flex items-center gap-2">
+                  <TagIcon className="size-4" />
+                  按核心知识点
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search Bar */}
+              <div className="relative w-full max-w-[280px] sm:w-[280px]">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input
+                  type="text"
+                  placeholder="搜索题目、标签..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 bg-white/[0.03] border-white/[0.06] text-sm"
+                />
+              </div>
+
+              {/* Toggle Expand/Collapse */}
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleExpandAll} className="h-9 px-3 text-xs bg-white/[0.03] border-white/[0.06]">
+                  展开全部
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleCollapseAll} className="h-9 px-3 text-xs bg-white/[0.03] border-white/[0.06]">
+                  折叠全部
+                </Button>
               </div>
             </div>
+          </div>
+
+          {/* Grouped Accordions list */}
+          {loading ? (
+            <div className="glass-card p-12 text-sm text-muted-foreground text-center">正在加载题目列表...</div>
+          ) : error ? (
+            <div className="glass-card p-12 text-sm text-destructive text-center border-destructive/20">{error}</div>
+          ) : sortedGroupKeys.length === 0 ? (
+            <div className="glass-card p-12 text-center text-sm text-muted-foreground">
+              没有找到与搜索条件匹配的题目。
+            </div>
+          ) : (
+            <Accordion type="multiple" value={openValues} onValueChange={setOpenValues} className="space-y-4">
+              <AnimatePresence initial={false}>
+                {sortedGroupKeys.map((groupKey) => {
+                  const groupProblems = activeGroups[groupKey];
+                  const acCount = groupProblems.filter((p) => p.user_status === 'AC').length;
+                  const totalCount = groupProblems.length;
+                  const progressPercent = totalCount > 0 ? (acCount / totalCount) * 100 : 0;
+
+                  return (
+                    <motion.div
+                      key={groupKey}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <AccordionItem
+                        value={groupKey}
+                        className="border border-white/[0.06] bg-white/[0.02] rounded-xl overflow-hidden shadow-sm transition hover:border-white/[0.1] hover:bg-white/[0.03]"
+                      >
+                        <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-white/[0.01]">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full pr-2">
+                            {/* Left side: Icon & Title info */}
+                            <div className="flex items-center gap-3">
+                              <div className="rounded-lg bg-indigo-500/10 p-2 text-indigo-400">
+                                {groupType === 'week' ? <FolderKanban className="size-4" /> : <TagIcon className="size-4" />}
+                              </div>
+                              <div className="text-left">
+                                <h3 className="text-base font-semibold text-foreground tracking-tight">{groupKey}</h3>
+                                <p className="text-xs text-muted-foreground">共 {totalCount} 道题目</p>
+                              </div>
+                            </div>
+
+                            {/* Right side: Progress meter */}
+                            <div className="flex items-center gap-4 sm:ml-auto">
+                              <div className="flex flex-col items-end gap-1.5 min-w-[120px]">
+                                <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                  已通过 <span className="font-mono text-foreground font-semibold">{acCount}</span> / {totalCount}
+                                </span>
+                                <div className="w-28 sm:w-36">
+                                  <Progress value={progressPercent} className="h-1.5 bg-white/[0.04] [&>[data-slot=progress-indicator]]:bg-indigo-500" />
+                                </div>
+                              </div>
+                              {progressPercent === 100 && totalCount > 0 && (
+                                <div className="flex size-5 items-center justify-center rounded-full bg-status-ac/15 text-status-ac">
+                                  <Check className="size-3" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+
+                        <AccordionContent className="px-6 pb-6 pt-2 border-t border-white/[0.04] bg-black/[0.1]">
+                          <ProblemTable problems={groupProblems} onSelect={(problemId) => navigate(`/problem/${problemId}`)} />
+                        </AccordionContent>
+                      </AccordionItem>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </Accordion>
           )}
         </section>
       </div>
     </AppShell>
   );
-}
-
-function getVisiblePages(currentPage: number, totalPages: number) {
-  if (totalPages <= 5) {
-    return Array.from({ length: totalPages }, (_, index) => index + 1);
-  }
-
-  const start = Math.max(1, currentPage - 2);
-  const end = Math.min(totalPages, start + 4);
-  const normalizedStart = Math.max(1, end - 4);
-  return Array.from({ length: end - normalizedStart + 1 }, (_, index) => normalizedStart + index);
 }
 
 function StatCard({
