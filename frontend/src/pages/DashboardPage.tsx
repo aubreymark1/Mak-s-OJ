@@ -91,37 +91,57 @@ export default function DashboardPage() {
     });
   }, [problems, searchQuery]);
 
-  // 从题目名称（如 `[第九周] xxx`）或 slug（如 `week9-xxx`）中动态解析教学周次
+  // 中文数字到阿拉伯数字的映射
+  const cnToArMap = useMemo<Record<string, number>>(() => ({
+    '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
+    '十一': 11, '十二': 12, '十三': 13, '十四': 14, '十五': 15, '十六': 16, '十七': 17, '十八': 18, '十九': 19, '二十': 20
+  }), []);
+
+  // 标准化周次名称，将中文数字或 "Week X" 统一转换成 "第X周"
+  const standardizeWeek = useCallback((rawWeek: string): string => {
+    // 如果包含阿拉伯数字，直接提取出来，如 "Week 12" -> "第12周"
+    const numMatch = rawWeek.match(/\d+/);
+    if (numMatch) {
+      return `第${numMatch[0]}周`;
+    }
+
+    // 匹配中文周次，如 "第十二周"
+    const cnMatch = rawWeek.match(/第([^周]+)周/);
+    if (cnMatch) {
+      const cnPart = cnMatch[1].trim();
+      if (cnToArMap[cnPart]) {
+        return `第${cnToArMap[cnPart]}周`;
+      }
+    }
+    return rawWeek;
+  }, [cnToArMap]);
+
+  // 从题目名称（如 `[第九周] xxx`）或 slug（如 `week9-xxx`）中动态解析教学周次并进行标准化
   const extractWeek = useCallback((problem: ProblemListItem): string => {
     const titleMatch = problem.title.match(/\[(第[^\]]+周|Week\s*\d+|[^\]]+考试|[^\]]+测验)\]/i);
+    let rawWeek = '';
     if (titleMatch) {
-      return titleMatch[1];
+      rawWeek = titleMatch[1];
+    } else {
+      const slugMatch = problem.slug.match(/^week(\d+)/i);
+      if (slugMatch) {
+        rawWeek = `第${slugMatch[1]}周`;
+      } else if (problem.slug.includes('midterm') || problem.title.includes('期中')) {
+        return '期中考试 / 测验';
+      } else {
+        return '公开题库 / 其他';
+      }
     }
-    const slugMatch = problem.slug.match(/^week(\d+)/i);
-    if (slugMatch) {
-      return `第${slugMatch[1]}周`;
-    }
-    if (problem.slug.includes('midterm') || problem.title.includes('期中')) {
-      return '期中考试 / 测验';
-    }
-    return '公开题库 / 其他';
-  }, []);
+    return standardizeWeek(rawWeek);
+  }, [standardizeWeek]);
 
-  // 周次自定义排序规则
+  // 周次自定义排序规则（已标准化，直接提取阿拉伯数字排序）
   const sortWeeks = useCallback((a: string, b: string): number => {
     const getWeight = (s: string) => {
       if (s.includes('期中')) return 1000;
       if (s.includes('其他') || s.includes('公开')) return 2000;
       const numMatch = s.match(/\d+/);
       if (numMatch) return parseInt(numMatch[0]);
-
-      const cnNums: Record<string, number> = {
-        '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
-        '十一': 11, '十二': 12, '十三': 13, '十四': 14, '十五': 15, '十六': 16, '十七': 17, '十八': 18
-      };
-      for (const key in cnNums) {
-        if (s.includes(key)) return cnNums[key];
-      }
       return 999;
     };
     return getWeight(a) - getWeight(b);
