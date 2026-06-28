@@ -161,31 +161,91 @@ export default function DashboardPage() {
     return groups;
   }, [filteredProblems, extractWeek]);
 
-  // 按知识点/标签多重归类分组
+  // 按照 E:\Materials\code\C++\CodexC++\courses 的核心知识点大类进行分类映射
+  const getMajorCategories = useCallback((problem: ProblemListItem): string[] => {
+    const categories: string[] = [];
+    
+    // 1. 优先根据解析出来的周次数字划分大类
+    const weekStr = extractWeek(problem);
+    const weekNumMatch = weekStr.match(/\d+/);
+    
+    if (weekNumMatch) {
+      const weekNum = parseInt(weekNumMatch[0], 10);
+      if (weekNum === 1 || weekNum === 2) {
+        categories.push('01-从C到C++');
+      } else if (weekNum === 3 || weekNum === 4) {
+        categories.push('02-数据抽象和类I');
+      } else if (weekNum === 5 || weekNum === 6) {
+        categories.push('03-数据抽象和类II');
+      } else if (weekNum === 7 || weekNum === 9) {
+        categories.push('04-运算符重载');
+      } else if (weekNum === 10 || weekNum === 11 || weekNum === 12) {
+        categories.push('05-继承和派生');
+      } else if (weekNum === 13 || weekNum === 14) {
+        categories.push('06-多态');
+      } else if (weekNum === 15) {
+        categories.push('07-模板');
+      } else if (weekNum === 16 || weekNum === 17) {
+        categories.push('08-STL');
+      }
+    }
+
+    // 2. 若未通过周次解析成功，或属于期中考试等其他综合题，利用题目本身的标签进行启发式多重归类
+    if (categories.length > 0) {
+      return categories;
+    }
+
+    const tagsLower = (problem.tags || []).map((t) => t.toLowerCase());
+    
+    if (tagsLower.some((t) => ['引用', '指针', '内存', '动态内存', '命名空间', 'namespace'].some((k) => t.includes(k)))) {
+      categories.push('01-从C到C++');
+    }
+    if (tagsLower.some((t) => ['构造函数', '析构函数', '类', '对象', 'this'].some((k) => t.includes(k)))) {
+      categories.push('02-数据抽象和类I');
+    }
+    if (tagsLower.some((t) => ['拷贝', '深拷贝', '浅拷贝', '静态', '友元', 'static', 'friend'].some((k) => t.includes(k)))) {
+      categories.push('03-数据抽象和类II');
+    }
+    if (tagsLower.some((t) => ['运算符重载', '仿函数', '函数对象', '流', 'operator'].some((k) => t.includes(k)))) {
+      categories.push('04-运算符重载');
+    }
+    if (tagsLower.some((t) => ['继承', '派生', '基类', '派生类', '虚继承'].some((k) => t.includes(k)))) {
+      categories.push('05-继承和派生');
+    }
+    if (tagsLower.some((t) => ['多态', '虚函数', '纯虚函数', '抽象类'].some((k) => t.includes(k)))) {
+      categories.push('06-多态');
+    }
+    if (tagsLower.some((t) => ['模板', '函数模板', '类模板', 'template'].some((k) => t.includes(k)))) {
+      categories.push('07-模板');
+    }
+    if (tagsLower.some((t) => ['stl', '容器', 'vector', 'list', 'map', 'set', 'string', 'algorithm', '算法'].some((k) => t.includes(k)))) {
+      categories.push('08-STL');
+    }
+
+    if (categories.length === 0) {
+      categories.push('09-综合应用 / 其他');
+    }
+
+    return categories;
+  }, [extractWeek]);
+
+  // 按核心大类分组
   const tagGroups = useMemo(() => {
     const groups: Record<string, ProblemListItem[]> = {};
     filteredProblems.forEach((problem) => {
-      const cleanTags = problem.tags.filter(
-        (t) => !['c++', 'c++语言', 'cpp'].includes(t.toLowerCase())
-      );
-      if (cleanTags.length === 0) {
-        const fallback = '其他知识点';
-        if (!groups[fallback]) groups[fallback] = [];
-        groups[fallback].push(problem);
-      } else {
-        cleanTags.forEach((tag) => {
-          if (!groups[tag]) groups[tag] = [];
-          if (!groups[tag].some((p) => p.id === problem.id)) {
-            groups[tag].push(problem);
-          }
-        });
-      }
+      const majorCategories = getMajorCategories(problem);
+      majorCategories.forEach((category) => {
+        if (!groups[category]) groups[category] = [];
+        if (!groups[category].some((p) => p.id === problem.id)) {
+          groups[category].push(problem);
+        }
+      });
     });
     Object.keys(groups).forEach((key) => {
       groups[key].sort((a, b) => b.id - a.id);
     });
     return groups;
-  }, [filteredProblems]);
+  }, [filteredProblems, getMajorCategories]);
 
   // 排序后的分组 Key
   const sortedGroupKeys = useMemo(() => {
