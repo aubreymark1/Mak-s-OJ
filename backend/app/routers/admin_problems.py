@@ -25,6 +25,8 @@ def _problem_to_admin_detail(problem: Problem) -> AdminProblemDetail:
         title=problem.title,
         difficulty=problem.difficulty,
         tags=problem.tags or [],
+        type=getattr(problem, "type", "programming"),
+        choice_questions=getattr(problem, "choice_questions", None),
         statement_markdown=problem.statement_markdown,
         template_files=problem.template_files or {},
         readonly_files=problem.readonly_files or [],
@@ -45,6 +47,7 @@ def _problem_to_admin_list_item(problem: Problem) -> AdminProblemListItem:
         title=problem.title,
         difficulty=problem.difficulty,
         tags=problem.tags or [],
+        type=getattr(problem, "type", "programming"),
         has_fuzz=bool(problem.generator_code and problem.std_code),
         judge_case_count=len(problem.judge_cases or []),
         created_at=problem.created_at,
@@ -105,7 +108,9 @@ async def admin_create_problem(
         statement_markdown=payload.statement_markdown,
         difficulty=payload.difficulty,
         tags=payload.tags,
-        template_files=payload.template_files,
+        type=payload.type,
+        choice_questions=[q.model_dump() for q in payload.choice_questions] if payload.choice_questions else [],
+        template_files=payload.template_files or {},
         readonly_files=payload.readonly_files,
         time_limit_ms=payload.time_limit_ms,
         memory_limit_kb=payload.memory_limit_kb,
@@ -142,6 +147,13 @@ async def admin_update_problem(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"A problem with slug '{update_data['slug']}' already exists.",
             )
+
+    # Normalize choice_questions if provided
+    if "choice_questions" in update_data and update_data["choice_questions"] is not None:
+        update_data["choice_questions"] = [
+            q if isinstance(q, dict) else q.model_dump()
+            for q in update_data["choice_questions"]
+        ]
 
     # Normalize judge_cases — model_dump already converts to dicts
     if "judge_cases" in update_data and update_data["judge_cases"] is not None:

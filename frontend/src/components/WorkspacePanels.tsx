@@ -316,135 +316,144 @@ export function WorkspacePanels({
           <Separator className="w-1 cursor-col-resize bg-border/30 transition-colors hover:bg-primary/50" />
 
           <Panel defaultSize={66} minSize={40}>
-            <div className="flex h-full flex-col">
-              <div className="relative flex items-center gap-1 border-b border-border/30 bg-secondary/20 px-4 py-2">
-                {fileOrder.map((file) => {
-                  const isReadonly = readonlyFiles.has(file);
-                  const isActive = activeFile === file;
-                  return (
-                    <button
-                      key={file}
-                      type="button"
-                      onClick={() => onFileChange(file)}
-                      className={`relative flex items-center gap-2 rounded-t-md px-4 py-2 font-mono text-sm transition-colors duration-150 ${
-                        isActive
-                          ? 'text-primary'
-                          : 'bg-secondary/30 text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
-                      }`}
-                    >
-                      <FileCode className="h-3.5 w-3.5" />
-                      <span>{file}</span>
-                      {isReadonly ? <Lock className="h-3.5 w-3.5 text-amber-300" /> : null}
-                      {isActive ? (
-                        <motion.div
-                          className="absolute left-0 right-0 top-0 h-0.5 rounded-full"
-                          style={{
-                            backgroundColor: 'var(--primary)',
-                            boxShadow: '0 0 10px var(--primary)',
-                          }}
-                          layoutId="fileTabIndicator"
-                          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                        />
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="flex-1 overflow-hidden bg-background">
-                <Group orientation="vertical">
-                  <Panel defaultSize={68} minSize={38}>
-                    <div className="flex h-full flex-col">
-                      <div className="flex shrink-0 items-center justify-between border-b border-border/50 bg-background/80 px-4 py-2 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-3">
-                          <span>{isReadonlyFile ? '当前文件为只读模板，已锁定编辑。' : '当前文件可编辑。'}</span>
-                          <select
-                            value={editorMode}
-                            onChange={(e) => updateEditorMode(e.target.value as EditorMode)}
-                            className="rounded border border-border bg-muted px-2 py-1 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary/50"
-                          >
-                            <option value="auto">自动</option>
-                            <option value="simple">简易编辑器</option>
-                            <option value="advanced">高级编辑器</option>
-                          </select>
-                          {useSimpleEditor ? (
-                            <button
-                              type="button"
-                              onClick={handlePasteFromClipboard}
-                              className="inline-flex items-center gap-1 rounded border px-2 py-1 text-xs transition hover:bg-accent hover:text-accent-foreground"
-                            >
-                              <ClipboardPaste className="h-3 w-3" />
-                              粘贴代码
-                            </button>
-                          ) : null}
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {restoredSubmissionId ? (
-                            <span className="rounded-full border px-3 py-1 text-xs">
-                              {`已恢复提交 #${restoredSubmissionId}`}
-                            </span>
-                          ) : null}
-                          <span className="rounded-full border border-border/50 bg-card/70 px-3 py-1 text-foreground">
-                            {draftStatusLabel}
-                          </span>
-                          <span>{isReadonlyFile ? '只读模式' : '编辑模式'}</span>
-                        </div>
-                      </div>
-                      {pasteHint ? (
-                        <div className="shrink-0 border-b border-amber-500/30 bg-amber-950/20 px-4 py-2 text-xs text-amber-200">
-                          {pasteHint}
-                        </div>
-                      ) : null}
-                      {useSimpleEditor ? (
-                        <div className="min-h-0 flex-1 overflow-auto p-2">
-                          <MobileTextareaEditor
-                            value={fileContents[activeFile] ?? ''}
-                            onChange={(val) => onCodeChange(val, activeFile)}
-                            language={resolveLanguage(activeFile)}
-                            readOnly={isReadonlyFile}
+            {problem.type === 'choice' ? (
+              <ChoiceSheetPanel
+                problem={problem}
+                fileContents={fileContents}
+                onCodeChange={onCodeChange}
+                submission={submission}
+              />
+            ) : (
+              <div className="flex h-full flex-col">
+                <div className="relative flex items-center gap-1 border-b border-border/30 bg-secondary/20 px-4 py-2">
+                  {fileOrder.map((file) => {
+                    const isReadonly = readonlyFiles.has(file);
+                    const isActive = activeFile === file;
+                    return (
+                      <button
+                        key={file}
+                        type="button"
+                        onClick={() => onFileChange(file)}
+                        className={`relative flex items-center gap-2 rounded-t-md px-4 py-2 font-mono text-sm transition-colors duration-150 ${
+                          isActive
+                            ? 'text-primary'
+                            : 'bg-secondary/30 text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
+                        }`}
+                      >
+                        <FileCode className="h-3.5 w-3.5" />
+                        <span>{file}</span>
+                        {isReadonly ? <Lock className="h-3.5 w-3.5 text-amber-300" /> : null}
+                        {isActive ? (
+                          <motion.div
+                            className="absolute left-0 right-0 top-0 h-0.5 rounded-full"
+                            style={{
+                              backgroundColor: 'var(--primary)',
+                              boxShadow: '0 0 10px var(--primary)',
+                            }}
+                            layoutId="fileTabIndicator"
+                            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                           />
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex-1 overflow-hidden bg-background">
+                  <Group orientation="vertical">
+                    <Panel defaultSize={68} minSize={38}>
+                      <div className="flex h-full flex-col">
+                        <div className="flex shrink-0 items-center justify-between border-b border-border/50 bg-background/80 px-4 py-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-3">
+                            <span>{isReadonlyFile ? '当前文件为只读模板，已锁定编辑。' : '当前文件可编辑。'}</span>
+                            <select
+                              value={editorMode}
+                              onChange={(e) => updateEditorMode(e.target.value as EditorMode)}
+                              className="rounded border border-border bg-muted px-2 py-1 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary/50"
+                            >
+                              <option value="auto">自动</option>
+                              <option value="simple">简易编辑器</option>
+                              <option value="advanced">高级编辑器</option>
+                            </select>
+                            {useSimpleEditor ? (
+                              <button
+                                type="button"
+                                onClick={handlePasteFromClipboard}
+                                className="inline-flex items-center gap-1 rounded border px-2 py-1 text-xs transition hover:bg-accent hover:text-accent-foreground"
+                              >
+                                <ClipboardPaste className="h-3 w-3" />
+                                粘贴代码
+                              </button>
+                            ) : null}
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {restoredSubmissionId ? (
+                              <span className="rounded-full border px-3 py-1 text-xs">
+                                {`已恢复提交 #${restoredSubmissionId}`}
+                              </span>
+                            ) : null}
+                            <span className="rounded-full border border-border/50 bg-card/70 px-3 py-1 text-foreground">
+                              {draftStatusLabel}
+                            </span>
+                            <span>{isReadonlyFile ? '只读模式' : '编辑模式'}</span>
+                          </div>
                         </div>
-                      ) : (
-                        <Editor
-                          key={`${activeFile}__${editorVersion}`}
-                          height="100%"
-                          theme="vs-dark"
-                          path={activeFile}
-                          language={resolveLanguage(activeFile)}
-                          defaultValue={fileContents[activeFile] ?? ''}
-                          onChange={(value) => onCodeChange(value ?? '', activeFile)}
-                          options={{
-                            automaticLayout: true,
-                            minimap: { enabled: false },
-                            fontSize: 14,
-                            fontFamily: 'JetBrains Mono, monospace',
-                            scrollBeyondLastLine: false,
-                            roundedSelection: false,
-                            padding: { top: 16 },
-                            readOnly: isReadonlyFile,
-                            fixedOverflowWidgets: true,
-                            domReadOnly: isReadonlyFile,
-                          }}
-                        />
-                      )}
-                    </div>
-                  </Panel>
+                        {pasteHint ? (
+                          <div className="shrink-0 border-b border-amber-500/30 bg-amber-950/20 px-4 py-2 text-xs text-amber-200">
+                            {pasteHint}
+                          </div>
+                        ) : null}
+                        {useSimpleEditor ? (
+                          <div className="min-h-0 flex-1 overflow-auto p-2">
+                            <MobileTextareaEditor
+                              value={fileContents[activeFile] ?? ''}
+                              onChange={(val) => onCodeChange(val, activeFile)}
+                              language={resolveLanguage(activeFile)}
+                              readOnly={isReadonlyFile}
+                            />
+                          </div>
+                        ) : (
+                          <Editor
+                            key={`${activeFile}__${editorVersion}`}
+                            height="100%"
+                            theme="vs-dark"
+                            path={activeFile}
+                            language={resolveLanguage(activeFile)}
+                            defaultValue={fileContents[activeFile] ?? ''}
+                            onChange={(value) => onCodeChange(value ?? '', activeFile)}
+                            options={{
+                              automaticLayout: true,
+                              minimap: { enabled: false },
+                              fontSize: 14,
+                              fontFamily: 'JetBrains Mono, monospace',
+                              scrollBeyondLastLine: false,
+                              roundedSelection: false,
+                              padding: { top: 16 },
+                              readOnly: isReadonlyFile,
+                              fixedOverflowWidgets: true,
+                              domReadOnly: isReadonlyFile,
+                            }}
+                          />
+                        )}
+                      </div>
+                    </Panel>
 
-                  <Separator className="h-1 cursor-row-resize bg-border/30 transition-colors hover:bg-primary/50" />
+                    <Separator className="h-1 cursor-row-resize bg-border/30 transition-colors hover:bg-primary/50" />
 
-                  <Panel defaultSize={32} minSize={20}>
-                    <PlaygroundPanel
-                      inputValue={playgroundInput}
-                      outputValue={playgroundOutput}
-                      errorMessage={playgroundError}
-                      isRunning={isRunning}
-                      onInputChange={setPlaygroundInput}
-                      onRun={handleRun}
-                    />
-                  </Panel>
-                </Group>
+                    <Panel defaultSize={32} minSize={20}>
+                      <PlaygroundPanel
+                        inputValue={playgroundInput}
+                        outputValue={playgroundOutput}
+                        errorMessage={playgroundError}
+                        isRunning={isRunning}
+                        onInputChange={setPlaygroundInput}
+                        onRun={handleRun}
+                      />
+                    </Panel>
+                  </Group>
+                </div>
               </div>
-            </div>
+            )}
           </Panel>
         </Group>
       </div>
@@ -849,6 +858,22 @@ function parseConsoleDetails(problem: ProblemDetail, submission: SubmissionRespo
   }
 
   const parsed = isRecord(submission.judge_result) ? submission.judge_result : null;
+
+  if (parsed && parsed.phase === 'choice_judge') {
+    const correctCount = typeof parsed.correct_count === 'number' ? parsed.correct_count : 0;
+    const totalCount = typeof parsed.total_count === 'number' ? parsed.total_count : 0;
+    const pct = typeof parsed.score_percentage === 'number' ? parsed.score_percentage : 0;
+    return {
+      phase: 'choice_judge',
+      compileMessage: null,
+      summaries: [
+        { label: '回答正确', score: `${correctCount}/${totalCount}` },
+        { label: '得分率', score: `${pct}%` },
+      ],
+      testPoints: [],
+    };
+  }
+
   const compileNode = isRecord(parsed?.compile) ? parsed.compile : isRecord(parsed?.result) ? parsed.result : null;
   const compileMessage = normalizeText(submission.compiler_output) ?? extractCompileMessage(compileNode);
   const testPoints = extractTestPoints(parsed, problem);
@@ -1185,4 +1210,237 @@ function getHistoryStatusPalette(status: SubmissionStatus) {
     default:
       return 'border-red-500/30 bg-red-500/10 text-red-200';
   }
+}
+
+interface ChoiceSheetPanelProps {
+  problem: ProblemDetail;
+  fileContents: Record<string, string>;
+  onCodeChange: (value: string, fileName?: string) => void;
+  submission: SubmissionResponse | null;
+}
+
+function ChoiceSheetPanel({
+  problem,
+  fileContents,
+  onCodeChange,
+  submission,
+}: ChoiceSheetPanelProps) {
+  const parsedAnswers = useMemo(() => {
+    const raw = fileContents['answers.json'];
+    if (!raw) return {};
+    try {
+      const data = JSON.parse(raw);
+      return data.answers || {};
+    } catch {
+      return {};
+    }
+  }, [fileContents]);
+
+  const report = useMemo(() => {
+    if (!submission || submission.status === 'Pending' || submission.status === 'Judging') {
+      return null;
+    }
+    const result = submission.judge_result;
+    if (result && result.phase === 'choice_judge') {
+      return (result.report as Record<string, any>) || null;
+    }
+    return null;
+  }, [submission]);
+
+  const questions = problem.choice_questions || [];
+
+  const handleSelectOption = (questionId: number, qType: string, optionChar: string) => {
+    const qIdStr = String(questionId);
+    const currentSelections = (parsedAnswers[qIdStr] || []) as string[];
+    let nextSelections: string[] = [];
+
+    if (qType === 'single' || qType === 'judgment') {
+      if (currentSelections.includes(optionChar)) {
+        nextSelections = [];
+      } else {
+        nextSelections = [optionChar];
+      }
+    } else {
+      if (currentSelections.includes(optionChar)) {
+        nextSelections = currentSelections.filter((o) => o !== optionChar);
+      } else {
+        nextSelections = [...currentSelections, optionChar];
+      }
+    }
+
+    const nextAnswers = { ...parsedAnswers, [qIdStr]: nextSelections };
+    onCodeChange(JSON.stringify({ answers: nextAnswers }), 'answers.json');
+  };
+
+  if (!questions.length) {
+    return (
+      <div className="flex h-full items-center justify-center p-6 text-muted-foreground">
+        该选择题模块没有包含任何题目，请联系管理员配置。
+      </div>
+    );
+  }
+
+  const scorePct = submission?.judge_result?.score_percentage;
+
+  return (
+    <div className="flex h-full flex-col bg-background">
+      <div className="flex items-center justify-between border-b border-border/30 bg-secondary/20 px-6 py-4">
+        <div>
+          <span className="text-sm font-semibold text-foreground">理论答题卡 (Choice Sheet)</span>
+          <p className="text-xs text-muted-foreground mt-0.5">请在下方选择选项作答，完成后点击右上角“提交评测”进行判分。</p>
+        </div>
+        {report && (
+          <div className="flex items-center gap-4 text-sm font-medium">
+            <span className="text-emerald-400">
+              通过: {String(submission?.judge_result?.correct_count)} / {String(submission?.judge_result?.total_count)}
+            </span>
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+              得分率: {String(scorePct)}%
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {questions.map((q, idx) => {
+          const qIdStr = String(q.id);
+          const userSelections = (parsedAnswers[qIdStr] || []) as string[];
+          const qReport = report?.[qIdStr] || null;
+
+          return (
+            <div
+              key={q.id}
+              className={`rounded-2xl border p-6 transition-all duration-200 ${
+                qReport
+                  ? qReport.correct
+                    ? 'border-emerald-500/20 bg-emerald-950/5'
+                    : 'border-red-500/20 bg-red-950/5'
+                  : 'border-border/50 bg-card/10 hover:border-border'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
+                    {idx + 1}
+                  </span>
+                  <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-muted-foreground font-medium">
+                    {q.type === 'single' ? '单选题' : q.type === 'judgment' ? '判断题' : '多选题'}
+                  </span>
+                </div>
+                {qReport && (
+                  <div>
+                    {qReport.correct ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400">
+                        <CheckCircle2 className="h-4 w-4" /> 回答正确
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-400">
+                        <XCircle className="h-4 w-4" /> 回答错误
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <p className="text-foreground text-sm font-medium leading-relaxed mb-4 whitespace-pre-wrap">
+                {q.description}
+              </p>
+
+              <div className="space-y-2">
+                {q.type === 'judgment' ? (
+                  [['T', '正确 (True)'], ['F', '错误 (False)']].map(([val, label]) => {
+                    const isSelected = userSelections.includes(val);
+                    const isCorrectOption = (qReport?.correct_answer || []) as string[];
+                    const hasCorrect = isCorrectOption.includes(val);
+                    const isUserWrongOption = isSelected && qReport && !qReport.correct;
+
+                    let optionStyle = 'border-border/50 bg-secondary/10 text-foreground hover:bg-secondary/20 hover:border-border';
+                    if (isSelected) {
+                      optionStyle = 'border-primary bg-primary/10 text-primary';
+                    }
+                    if (qReport) {
+                      if (hasCorrect) {
+                        optionStyle = 'border-emerald-500 bg-emerald-500/10 text-emerald-400 font-semibold';
+                      } else if (isUserWrongOption) {
+                        optionStyle = 'border-red-500 bg-red-500/10 text-red-400';
+                      }
+                    }
+
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => handleSelectOption(q.id, q.type, val)}
+                        className={`flex w-full items-center gap-3 rounded-xl border p-3.5 text-left text-sm transition duration-150 ${optionStyle}`}
+                      >
+                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-current">
+                          {isSelected && <div className="h-2.5 w-2.5 rounded-full bg-current" />}
+                        </div>
+                        <span>{label}</span>
+                      </button>
+                    );
+                  })
+                ) : (
+                  q.options.map((opt) => {
+                    const match = opt.trim().match(/^([A-Z])[\.\s:]/i);
+                    const optionChar = match ? match[1].toUpperCase() : opt.trim().substring(0, 1).toUpperCase();
+                    
+                    const isSelected = userSelections.includes(optionChar);
+                    const isCorrectOption = (qReport?.correct_answer || []) as string[];
+                    const hasCorrect = isCorrectOption.includes(optionChar);
+                    const isUserWrongOption = isSelected && qReport && !qReport.correct;
+
+                    let optionStyle = 'border-border/50 bg-secondary/10 text-foreground hover:bg-secondary/20 hover:border-border';
+                    if (isSelected) {
+                      optionStyle = 'border-primary bg-primary/10 text-primary';
+                    }
+                    if (qReport) {
+                      if (hasCorrect) {
+                        optionStyle = 'border-emerald-500 bg-emerald-500/10 text-emerald-400 font-semibold';
+                      } else if (isUserWrongOption) {
+                        optionStyle = 'border-red-500 bg-red-500/10 text-red-400';
+                      }
+                    }
+
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => handleSelectOption(q.id, q.type, optionChar)}
+                        className={`flex w-full items-center gap-3 rounded-xl border p-3.5 text-left text-sm transition duration-150 ${optionStyle}`}
+                      >
+                        <div className={`flex h-5 w-5 shrink-0 items-center justify-center border border-current ${q.type === 'multiple' ? 'rounded' : 'rounded-full'}`}>
+                          {isSelected && (
+                            <div className={`bg-current ${q.type === 'multiple' ? 'h-2.5 w-2.5 rounded-sm' : 'h-2.5 w-2.5 rounded-full'}`} />
+                          )}
+                        </div>
+                        <span>{opt}</span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+
+              {qReport && (
+                <div className="mt-4 rounded-xl bg-secondary/10 p-4 border border-border/30 text-xs text-muted-foreground space-y-2">
+                  <div>
+                    <span className="font-semibold text-foreground mr-2">标准答案:</span>
+                    <span className="font-bold text-emerald-400 uppercase tracking-widest">
+                      {((qReport.correct_answer || []) as string[]).join(', ')}
+                    </span>
+                  </div>
+                  {qReport.explanation && (
+                    <div>
+                      <span className="font-semibold text-foreground block mb-1">解析:</span>
+                      <p className="leading-relaxed whitespace-pre-wrap">{String(qReport.explanation)}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }

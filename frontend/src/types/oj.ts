@@ -25,6 +25,7 @@ export interface ProblemListItem {
   title: string;
   difficulty?: Difficulty | null;
   tags: string[];
+  type?: string;
   user_status?: 'AC' | 'Attempted' | null;
   created_at: string;
   updated_at: string;
@@ -51,7 +52,9 @@ export interface ProblemDetail {
   difficulty?: Difficulty | null;
   tags: string[];
   description: string;
-  template_files: Record<string, string>;
+  type?: string;
+  choice_questions?: ChoiceQuestion[] | null;
+  template_files?: Record<string, string> | null;
   readonly_files?: string[] | null;
   time_limit_ms: number;
   memory_limit_kb: number;
@@ -233,4 +236,14 @@ export interface AdminUserProblemProgress {
   best_memory_kb: number | null;
   last_submitted_at: string | null;
 }
+
+export interface ChoiceQuestion {
+  id: number;
+  type: 'single' | 'multiple' | 'judgment' | string;
+  description: string;
+  options: string[];
+  answer?: string[];
+  explanation?: string | null;
+}
+
 

@@ -758,12 +758,88 @@ async def _judge_submission_async(
         return await _judge_static_async(client, context)
 
 
+def _judge_choice_submission(code: dict[str, str], choice_questions: list[dict]) -> tuple[SubmissionStatus, dict[str, Any]]:
+    import json
+    
+    answers_str = code.get("answers.json", "{}")
+    try:
+        answers_data = json.loads(answers_str)
+        user_answers = answers_data.get("answers", {})
+    except Exception:
+        user_answers = {}
+
+    correct_count = 0
+    total_count = len(choice_questions)
+    report = {}
+
+    for q in choice_questions:
+        q_id = str(q.get("id"))
+        correct_ans = q.get("answer", [])
+        
+        # Normalize and sort correct answers
+        sorted_correct = sorted([str(a).strip().upper() for a in correct_ans])
+        
+        # Normalize and sort user answers
+        user_ans = user_answers.get(q_id, [])
+        sorted_user = sorted([str(a).strip().upper() for a in user_ans])
+        
+        is_correct = sorted_correct == sorted_user
+        if is_correct:
+            correct_count += 1
+
+        report[q_id] = {
+            "correct": is_correct,
+            "user_answer": user_ans,
+            "correct_answer": correct_ans,
+            "explanation": q.get("explanation", ""),
+        }
+
+    status = SubmissionStatus.AC if correct_count == total_count else SubmissionStatus.WA
+
+    judge_result = {
+        "phase": "choice_judge",
+        "correct_count": correct_count,
+        "total_count": total_count,
+        "score_percentage": round((correct_count / total_count * 100) if total_count > 0 else 100, 2),
+        "report": report,
+    }
+
+    return status, judge_result
+
+
 async def _run_submission_task(submission_id: int) -> dict[str, Any]:
     await _update_submission(
         submission_id,
         status=SubmissionStatus.JUDGING,
         judge_result={"phase": "queued"},
     )
+
+    async with AsyncSessionLocal() as session:
+        stmt = (
+            select(Submission)
+            .options(selectinload(Submission.problem))
+            .where(Submission.id == submission_id)
+        )
+        submission = (await session.execute(stmt)).scalar_one_or_none()
+        if submission is None:
+            return {"submission_id": submission_id, "status": "missing"}
+
+        problem = submission.problem
+        is_choice = getattr(problem, "type", "programming") == "choice"
+
+        if is_choice:
+            choice_questions = getattr(problem, "choice_questions", []) or []
+            status, judge_result = _judge_choice_submission(submission.code or {}, choice_questions)
+            
+            await _update_submission(
+                submission_id,
+                status=status,
+                runtime_ms=0,
+                memory_kb=0,
+                compiler_output="Multiple Choice grading completed.",
+                judge_result=judge_result,
+            )
+            return {"submission_id": submission_id, "status": status.value}
 
     context = await _load_submission_context(submission_id)
     if context is None:

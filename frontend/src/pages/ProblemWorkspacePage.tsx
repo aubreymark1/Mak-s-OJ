@@ -99,7 +99,7 @@ export default function ProblemWorkspacePage() {
       const readonlySet = new Set(problemData.readonly_files ?? []);
       const currentTemplateHash = computeTemplateHash(problemData);
 
-      const recoveredFiles: Record<string, string> = { ...problemData.template_files };
+      const recoveredFiles: Record<string, string> = { ...(problemData.template_files || {}) };
       let draftToSave: string | null = null;
 
       if (latestSubmission) {
@@ -113,7 +113,7 @@ export default function ProblemWorkspacePage() {
         if (localDraft) {
           if (localDraft.templateHash === currentTemplateHash) {
             for (const [name, content] of Object.entries(localDraft.files)) {
-              if (!readonlySet.has(name) && name in problemData.template_files) {
+              if (!readonlySet.has(name) && name in (problemData.template_files || {})) {
                 recoveredFiles[name] = content;
               }
             }
@@ -124,13 +124,26 @@ export default function ProblemWorkspacePage() {
         }
       }
 
+      if (problemData.type === 'choice' && !recoveredFiles['answers.json']) {
+        recoveredFiles['answers.json'] = JSON.stringify({ answers: {} });
+      }
+
       setProblem(problemData);
       setSubmissionHistory(historyData);
       setFileContents(recoveredFiles);
-      setActiveFile(Object.keys(problemData.template_files)[0] ?? Object.keys(recoveredFiles)[0] ?? 'main.cpp');
+      setActiveFile(problemData.type === 'choice' ? 'answers.json' : (Object.keys(problemData.template_files || {})[0] ?? Object.keys(recoveredFiles)[0] ?? 'main.cpp'));
       setRestoredSubmissionId(latestSubmission?.id ?? null);
       setDraftSavedAt(draftToSave);
       setHasPendingDraftSave(false);
+
+      if (latestSubmission) {
+        try {
+          const subResult = await api.get<SubmissionResponse>(`/submissions/${latestSubmission.id}`);
+          setSubmission(subResult.data);
+        } catch (e) {
+          console.error('Failed to load latest submission details', e);
+        }
+      }
     } catch {
       setError('\u9898\u76ee\u5de5\u4f5c\u53f0\u52a0\u8f7d\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002');
     } finally {
@@ -199,19 +212,26 @@ export default function ProblemWorkspacePage() {
     }
   }
 
-  function restoreSubmissionCode(historyItem: ProblemSubmissionHistoryItem) {
+  async function restoreSubmissionCode(historyItem: ProblemSubmissionHistoryItem) {
     if (!problem) return;
     const readonlySet = new Set(problem.readonly_files ?? []);
-    const mergedFiles = { ...problem.template_files };
+    const mergedFiles = { ...(problem.template_files || {}) };
     for (const [name, content] of Object.entries(historyItem.code)) {
       if (!readonlySet.has(name)) {
         mergedFiles[name] = content;
       }
     }
     setFileContents(mergedFiles);
-    setActiveFile(Object.keys(problem.template_files)[0] ?? Object.keys(mergedFiles)[0] ?? 'main.cpp');
+    setActiveFile(problem.type === 'choice' ? 'answers.json' : (Object.keys(problem.template_files || {})[0] ?? Object.keys(mergedFiles)[0] ?? 'main.cpp'));
     setRestoredSubmissionId(historyItem.id);
     setEditorVersion((v) => v + 1);
+
+    try {
+      const { data } = await api.get<SubmissionResponse>(`/submissions/${historyItem.id}`);
+      setSubmission(data);
+    } catch (e) {
+      console.error('Failed to load restored submission details', e);
+    }
   }
 
   async function handleSubmit() {
@@ -328,9 +348,9 @@ function computeTemplateHash(problem: ProblemDetail): string {
   const parts: string[] = [
     String(problem.id),
     problem.updated_at,
-    ...sortedReadonlyFiles.map((name) => `ro:${name}=${problem.template_files[name] ?? ''}`),
+    ...sortedReadonlyFiles.map((name) => `ro:${name}=${(problem.template_files || {})[name] ?? ''}`),
   ];
-  const sortedAllNames = Object.keys(problem.template_files).sort();
+  const sortedAllNames = Object.keys(problem.template_files || {}).sort();
   for (const name of sortedAllNames) {
     if (!readonlySet.has(name)) {
       parts.push(`tpl:${name}`);

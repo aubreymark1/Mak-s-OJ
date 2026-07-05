@@ -57,13 +57,30 @@ class TokenResponse(StrictSchema):
     user: UserRead
 
 
+class ChoiceQuestion(StrictSchema):
+    id: int
+    type: str  # "single" | "multiple" | "judgment"
+    description: str
+    options: list[str] = Field(default_factory=list)
+    answer: list[str] = Field(default_factory=list)
+    explanation: str | None = None
+
+
+class ChoiceQuestionRead(StrictSchema):
+    id: int
+    type: str
+    description: str
+    options: list[str] = Field(default_factory=list)
+
+
 class ProblemBase(StrictSchema):
     slug: Slug
     title: Title
     statement_markdown: Annotated[str, StringConstraints(min_length=1)]
     difficulty: Difficulty | None = None
     tags: list[Tag] = Field(default_factory=list)
-    template_files: MultiFileCode = Field(min_length=1)
+    type: str = "programming"
+    template_files: MultiFileCode | None = None
     readonly_files: list[FileName] = Field(default_factory=list)
     time_limit_ms: int = Field(default=2000, ge=100, le=60000)
     memory_limit_kb: int = Field(default=262144, ge=16384, le=1048576)
@@ -71,12 +88,16 @@ class ProblemBase(StrictSchema):
 
     @field_validator("template_files")
     @classmethod
-    def validate_template_files(cls, value: MultiFileCode) -> MultiFileCode:
+    def validate_template_files(cls, value: MultiFileCode | None) -> MultiFileCode | None:
+        if value is None:
+            return None
         return validate_multifile_payload(value)
 
     @field_validator("readonly_files")
     @classmethod
     def validate_readonly_files(cls, value: list[FileName]) -> list[FileName]:
+        if not value:
+            return []
         normalized = validate_multifile_payload({name: "" for name in value})
         return list(normalized.keys())
 
@@ -84,6 +105,7 @@ class ProblemBase(StrictSchema):
 class ProblemCreate(ProblemBase):
     generator_code: str | None = None
     std_code: str | None = None
+    choice_questions: list[ChoiceQuestion] | None = None
 
 
 class ProblemRead(ProblemBase):
@@ -98,6 +120,7 @@ class ProblemListItem(StrictSchema):
     title: Title
     difficulty: Difficulty | None = None
     tags: list[Tag] = Field(default_factory=list)
+    type: str = "programming"
     user_status: str | None = None
     created_at: datetime
     updated_at: datetime
@@ -110,7 +133,9 @@ class ProblemDetail(StrictSchema):
     difficulty: Difficulty | None = None
     tags: list[Tag] = Field(default_factory=list)
     description: Annotated[str, StringConstraints(min_length=1)]
-    template_files: MultiFileCode
+    type: str = "programming"
+    choice_questions: list[ChoiceQuestionRead] | None = None
+    template_files: MultiFileCode | None = None
     readonly_files: list[FileName] = Field(default_factory=list)
     time_limit_ms: int
     memory_limit_kb: int
@@ -208,7 +233,9 @@ class AdminProblemCreate(StrictSchema):
     statement_markdown: Annotated[str, StringConstraints(min_length=1)]
     difficulty: Difficulty | None = None
     tags: list[Tag] = Field(default_factory=list)
-    template_files: MultiFileCode = Field(min_length=1)
+    type: str = "programming"
+    choice_questions: list[ChoiceQuestion] | None = None
+    template_files: MultiFileCode | None = None
     readonly_files: list[FileName] = Field(default_factory=list)
     time_limit_ms: int = Field(default=2000, ge=100, le=60000)
     memory_limit_kb: int = Field(default=262144, ge=16384, le=1048576)
@@ -218,7 +245,9 @@ class AdminProblemCreate(StrictSchema):
 
     @field_validator("template_files")
     @classmethod
-    def validate_template_files(cls, value: MultiFileCode) -> MultiFileCode:
+    def validate_template_files(cls, value: MultiFileCode | None) -> MultiFileCode | None:
+        if value is None:
+            return None
         return validate_multifile_payload(value)
 
     @field_validator("readonly_files")
@@ -236,6 +265,8 @@ class AdminProblemUpdate(StrictSchema):
     statement_markdown: Annotated[str, StringConstraints(min_length=1)] | None = None
     difficulty: Difficulty | None = None
     tags: list[Tag] | None = None
+    type: str | None = None
+    choice_questions: list[ChoiceQuestion] | None = None
     template_files: MultiFileCode | None = None
     readonly_files: list[FileName] | None = None
     time_limit_ms: int | None = Field(default=None, ge=100, le=60000)
@@ -269,7 +300,9 @@ class AdminProblemDetail(StrictSchema):
     difficulty: Difficulty | None = None
     tags: list[Tag] = Field(default_factory=list)
     statement_markdown: Annotated[str, StringConstraints(min_length=1)]
-    template_files: MultiFileCode
+    type: str = "programming"
+    choice_questions: list[ChoiceQuestion] | None = None
+    template_files: MultiFileCode | None = None
     readonly_files: list[FileName] = Field(default_factory=list)
     time_limit_ms: int
     memory_limit_kb: int
@@ -286,6 +319,7 @@ class AdminProblemListItem(StrictSchema):
     title: Title
     difficulty: Difficulty | None = None
     tags: list[Tag] = Field(default_factory=list)
+    type: str = "programming"
     has_fuzz: bool = False
     judge_case_count: int = 0
     created_at: datetime

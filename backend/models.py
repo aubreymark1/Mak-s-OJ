@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import enum
 from datetime import datetime
@@ -100,6 +100,16 @@ class Problem(TimestampMixin, Base):
     )
     generator_code: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
     std_code: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
+    type: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        server_default=text("'programming'"),
+    )
+    choice_questions: Mapped[list[dict[str, Any]] | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        server_default=text("'[]'::jsonb"),
+    )
 
     submissions: Mapped[list[Submission]] = relationship(back_populates="problem", cascade="all, delete-orphan")
 
