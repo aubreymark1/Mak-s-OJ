@@ -146,3 +146,29 @@ async def admin_get_user_progress(
         )
 
     return response
+
+
+@router.delete("/{user_id}", status_code=status.HTTP_200_OK)
+async def admin_delete_user(
+    user_id: int,
+    session: AsyncSession = Depends(get_db_session),
+    current_admin: User = Depends(get_current_admin_user),
+) -> dict[str, str]:
+    # 1. Check if user exists
+    user = await session.get(User, user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
+    # 2. Prevent admin from deleting themselves
+    if user.id == current_admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot delete your own admin account.",
+        )
+
+    # 3. Delete user (cascade will delete their submissions)
+    await session.delete(user)
+    await session.commit()
+
+    return {"detail": f"User {user_id} and all related submissions deleted."}
+

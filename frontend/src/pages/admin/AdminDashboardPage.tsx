@@ -32,6 +32,7 @@ import type {
 import { Tabs, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Input } from '../../components/ui/input';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../../components/ui/accordion';
+import { useAuthStore } from '../../store/authStore';
 
 const containerVariants = {
   hidden: {},
@@ -45,6 +46,7 @@ const rowVariants = {
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
+  const currentUser = useAuthStore((state) => state.user);
 
   // Tab State
   const [activeTab, setActiveTab] = useState<'problems' | 'users'>('problems');
@@ -64,6 +66,8 @@ export default function AdminDashboardPage() {
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userSortField, setUserSortField] = useState<'id' | 'ac' | 'submissions' | 'rate'>('id');
   const [userSortOrder, setUserSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [deleteUserTarget, setDeleteUserTarget] = useState<AdminUserStats | null>(null);
+  const [deletingUser, setDeletingUser] = useState(false);
 
   // Single User Progress Detail State
   const [selectedUser, setSelectedUser] = useState<AdminUserStats | null>(null);
@@ -143,6 +147,21 @@ export default function AdminDashboardPage() {
       setProblemsError('删除失败，请稍后重试。');
     } finally {
       setDeleting(false);
+    }
+  }
+
+  // Handle user delete
+  async function confirmDeleteUser() {
+    if (!deleteUserTarget) return;
+    setDeletingUser(true);
+    try {
+      await api.delete(`/admin/users/${deleteUserTarget.id}`);
+      setUsers((prev) => prev.filter((u) => u.id !== deleteUserTarget.id));
+      setDeleteUserTarget(null);
+    } catch {
+      setUsersError('删除用户失败，请稍后重试。');
+    } finally {
+      setDeletingUser(false);
     }
   }
 
@@ -431,14 +450,15 @@ export default function AdminDashboardPage() {
                     已通过题目
                     {userSortField === 'ac' && (userSortOrder === 'asc' ? '↑' : '↓')}
                   </div>
-                  <div className="col-span-2 cursor-pointer select-none flex items-center justify-center gap-1 hover:text-foreground transition-colors" onClick={() => toggleSort('submissions')}>
-                    提交总次数
+                  <div className="col-span-1 cursor-pointer select-none flex items-center justify-center gap-1 hover:text-foreground transition-colors" onClick={() => toggleSort('submissions')}>
+                    提交数
                     {userSortField === 'submissions' && (userSortOrder === 'asc' ? '↑' : '↓')}
                   </div>
                   <div className="col-span-2 cursor-pointer select-none flex items-center justify-end gap-1 hover:text-foreground transition-colors" onClick={() => toggleSort('rate')}>
                     AC 提交率
                     {userSortField === 'rate' && (userSortOrder === 'asc' ? '↑' : '↓')}
                   </div>
+                  <div className="col-span-1 text-right">操作</div>
                 </div>
 
                 <motion.div variants={containerVariants} initial="hidden" animate="visible">
@@ -448,7 +468,7 @@ export default function AdminDashboardPage() {
                       variants={rowVariants}
                       custom={idx}
                       onClick={() => setSelectedUser(u)}
-                      className="grid grid-cols-12 items-center gap-4 px-6 py-3.5 border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.03] transition-colors cursor-pointer"
+                      className="grid grid-cols-12 items-center gap-4 px-6 py-3 border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.03] transition-colors cursor-pointer"
                     >
                       <div className="col-span-1 font-mono text-sm text-muted-foreground">{u.id}</div>
                       <div className="col-span-3 flex flex-col">
@@ -471,14 +491,28 @@ export default function AdminDashboardPage() {
                       <div className="col-span-2 text-center text-foreground font-mono font-medium">
                         {u.ac_problems_count} <span className="text-xs text-muted-foreground font-sans">/ {u.attempted_problems_count}</span>
                       </div>
-                      <div className="col-span-2 text-center text-foreground font-mono">
+                      <div className="col-span-1 text-center text-foreground font-mono">
                         {u.total_submissions}
                       </div>
-                      <div className="col-span-2 flex items-center justify-end gap-2">
+                      <div className="col-span-2 flex items-center justify-end gap-2 pr-2">
                         <span className="font-mono text-sm font-semibold text-indigo-400">{(u.ac_rate * 100).toFixed(1)}%</span>
-                        <div className="w-12 bg-white/[0.04] h-1 rounded-full overflow-hidden">
+                        <div className="w-10 bg-white/[0.04] h-1 rounded-full overflow-hidden shrink-0">
                           <div className="bg-indigo-500 h-full" style={{ width: `${u.ac_rate * 100}%` }} />
                         </div>
+                      </div>
+                      <div className="col-span-1 flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={u.id === currentUser?.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteUserTarget(u);
+                          }}
+                          className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive rounded-full disabled:opacity-30 border-none"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
                       </div>
                     </motion.div>
                   ))}
@@ -526,6 +560,47 @@ export default function AdminDashboardPage() {
                 </Button>
                 <Button variant="destructive" onClick={() => void confirmDelete()} disabled={deleting}>
                   {deleting ? '删除中...' : '确认删除'}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      {/* Delete User Confirmation Modal */}
+      <AnimatePresence>
+        {deleteUserTarget ? (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setDeleteUserTarget(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 12 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-xl border bg-card p-6 shadow-lg border-white/[0.08]"
+            >
+              <div className="mb-4 flex items-center gap-3">
+                <div className="rounded-full border border-destructive/30 bg-destructive/10 p-2">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                </div>
+                <h3 className="text-lg font-semibold">确认删除用户</h3>
+              </div>
+              <p className="mb-6 text-sm text-muted-foreground">
+                即将删除用户 <span className="font-mono">@{deleteUserTarget.username} ({deleteUserTarget.full_name || '无真实姓名'})</span>，
+                该操作将**永久清空该用户的所有答题历史、代码提交记录和系统数据**，且不可恢复。
+              </p>
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setDeleteUserTarget(null)}>
+                  取消
+                </Button>
+                <Button variant="destructive" onClick={() => void confirmDeleteUser()} disabled={deletingUser}>
+                  {deletingUser ? '删除中...' : '确认删除'}
                 </Button>
               </div>
             </motion.div>
