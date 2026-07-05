@@ -201,3 +201,36 @@ export interface AdminProblemPayload {
   generator_code?: string | null;
   std_code?: string | null;
 }
+
+export interface AdminUserStats {
+  id: number;
+  username: string;
+  email: string;
+  full_name?: string | null;
+  is_admin: boolean;
+  is_active: boolean;
+  last_login_at?: string | null;
+  total_submissions: number;
+  ac_problems_count: number;
+  attempted_problems_count: number;
+  ac_submissions_count: number;
+  ac_rate: number;
+}
+
+export interface AdminUserListResponse {
+  users: AdminUserStats[];
+}
+
+export interface AdminUserProblemProgress {
+  problem_id: number;
+  slug: string;
+  title: string;
+  difficulty?: Difficulty | null;
+  tags: string[];
+  status?: 'AC' | 'Attempted' | null;
+  total_submissions: number;
+  best_runtime_ms: number | null;
+  best_memory_kb: number | null;
+  last_submitted_at: string | null;
+}
+

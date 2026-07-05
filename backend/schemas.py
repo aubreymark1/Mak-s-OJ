@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import datetime
 from pathlib import PurePosixPath
@@ -316,3 +316,38 @@ def validate_multifile_payload(value: MultiFileCode) -> MultiFileCode:
         normalized[file_name] = raw_content
 
     return normalized
+
+
+# ── Admin User Statistics Schemas ──────────────────────────────────────────────
+
+class AdminUserStats(StrictSchema):
+    id: int
+    username: str
+    email: str
+    full_name: str | None
+    is_admin: bool
+    is_active: bool
+    last_login_at: datetime | None
+    total_submissions: int
+    ac_problems_count: int
+    attempted_problems_count: int
+    ac_submissions_count: int
+    ac_rate: float
+
+
+class AdminUserListResponse(StrictSchema):
+    users: list[AdminUserStats]
+
+
+class AdminUserProblemProgress(StrictSchema):
+    problem_id: int
+    slug: str
+    title: str
+    difficulty: str | None
+    tags: list[str]
+    status: str | None  # "AC", "Attempted", or None
+    total_submissions: int
+    best_runtime_ms: int | None
+    best_memory_kb: int | None
+    last_submitted_at: datetime | None
+
